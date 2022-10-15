@@ -72,7 +72,7 @@ class wds():
         self.headLimitLo    = 15
         self.headLimitHi    = 120
         self.maxHead        = np.max(peak_heads)
-        self.rewScale       = [5,8,3] # eff, head, pump
+        self.rewScale       = [5,8,3] # mut factors of eff, head, pump
         self.baseReward     = +1
         self.bumpPenalty    = -1
         self.distanceRange  = .5
@@ -412,7 +412,7 @@ class wds():
         else:
             reward  = 0
         return reward
-
+# restrict pump speed to limits and call .get_state_value()
     def get_state_value_to_opti(self, pump_speeds):
         np.clip(a   = pump_speeds,
             a_min   = self.speedLimitLo,

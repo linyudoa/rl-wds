@@ -31,6 +31,7 @@ def assemble_plot_data(junc_prop):
         )
     return plot_data
 
+# nodal points plotting from data
 def build_plot_from_data(data, min_prop=None, max_prop=None, title=None, figtitle=None, palette='Viridis10'):
     if not min_prop:
         min_prop = min(data.data['junc_prop'])
@@ -89,7 +90,7 @@ class environment_wrapper(param.Parameterized):
         self.loaded_wds = ''
         self.head_lmt_lo= 15
         self.head_lmt_hi= 150
-
+# resolving wds to data grid
     def _assemble_junc_coordinates(self, wds):
         junc_x = []
         junc_y = []
@@ -144,7 +145,7 @@ class environment_wrapper(param.Parameterized):
                 pipe_z.append(valve.to_node.elevation)
                 pipe_z.append(float('nan'))
         return {'x': pipe_x, 'y': pipe_y, 'z': pipe_z}
-
+# loding rl model and pipe model
     def load_env(self, wds_name, resetOrigDemands, resetOrigPumpSpeeds):
         if wds_name != self.loaded_wds:
             if wds_name == 'Anytown':
@@ -205,7 +206,7 @@ class environment_wrapper(param.Parameterized):
         num_of_pipes.value  = 'Number of pipes: {}'.format(str(len(wrapper.env.wds.pipes.uid)))
         num_of_pumps.value  = 'Number of pump stations: {}'.format(str(len(wrapper.env.pumpGroups)))
         return self.plot
-
+# calling opt methods
 class optimize_speeds(param.Parameterized):
     act_opti    = param.Action(
         lambda x: x.param.trigger('act_opti'),
@@ -229,7 +230,7 @@ class optimize_speeds(param.Parameterized):
         wrapper.env.wds.solve()
         wrapper.env.steps   = 0
         wrapper.env.done    = False
-        obs                 = wrapper.env.get_observation()
+        obs                 = wrapper.env.get_observation() # getting wds state observation
         self.hist_dqn       = [wrapper.env.wds.junctions.head]
         self.hist_val_dqn   = [wrapper.env.get_state_value()]
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -270,7 +271,7 @@ class optimize_speeds(param.Parameterized):
             'maxfev': 100,
             'xatol' : .005,
             'fatol' : .01}
-        wrapper.env.wds.solve()
+        wrapper.env.wds.solve() # needs to solve wds state
         self.hist_nm    = [wrapper.env.wds.junctions.head]
         self.hist_val_nm= [wrapper.env.get_state_value()]
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -300,7 +301,7 @@ class optimize_speeds(param.Parameterized):
     def restore_bc(self):
         wrapper.env.wds.junctions.basedemand    = self.orig_demands
         wrapper.env.wds.pumps.speed             = self.orig_speeds
-
+# visualize dqn || nm results
     @param.depends('act_opti')
     def plot_dqn(self):
         response_opti.value     = 'Computing, please wait.'
