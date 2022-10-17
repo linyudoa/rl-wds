@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
+import sys
 import os
 import yaml
 import multiprocessing
@@ -21,7 +22,6 @@ parser.add_argument('--seed', default=None, type=int, help="Random seed for the 
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
 args    = parser.parse_args()
-
 pathToRoot      = os.path.dirname(os.path.realpath(__file__))
 pathToParams    = os.path.join(
                     pathToRoot,
@@ -401,12 +401,17 @@ oneshot = fixed_step_size_random_search(
     limit_hi    = env.speedLimitHi,
     step_size   = env.speedIncrement,
     maxfev      = 1)
-subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-subdf_de    = optimize_scenes(scene_df, de.maximize)
-subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
-subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
 
-subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
-result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
-result_df.to_hdf(pathToDB, key='results', mode='a')
+def main():
+    subdf_nm    = optimize_scenes(scene_df, nm.maximize)
+    subdf_de    = optimize_scenes(scene_df, de.maximize)
+    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
+
+    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
+    result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
+    result_df.to_hdf(pathToDB, key='results', mode='a')
+
+if __name__ == "__main__":
+    main()
