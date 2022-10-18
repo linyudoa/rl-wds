@@ -36,7 +36,7 @@ class wds():
         self.pumpEffs   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
 
         nomHCurvePtsDict, nomECurvePtsDict = self.get_performance_curve_points()
-        nomHCurvePoliDict       = self.fit_polinomials(
+        self.nomHCurvePoliDict       = self.fit_polinomials(
                                     nomHCurvePtsDict,
                                     degree=2,
                                     encapsulated=True)
@@ -47,20 +47,20 @@ class wds():
         self.sumOfDemands       = sum(
                             [demand for demand in self.wds.junctions.basedemand])
         self.demandRandomizer   = self.build_truncnorm_randomizer(
-                                    lo=.7, hi=1.3, mu=1.0, sigma=1.0)
+                                    lo=.7, hi=1.3, mu=1.0, sigma=1.0) # hyperparams for randomizing demand
 
         # Theoretical bounds of {head, efficiency}
         peak_heads   = []
-        for key in nomHCurvePoliDict.keys():
+        for key in self.nomHCurvePoliDict.keys():
             max_q       = np.max(nomHCurvePtsDict[key][:,0])
             opti_result = minimize(
-                -nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
-            peak_heads.append(nomHCurvePoliDict[key](opti_result.x[0]))
+                -self.nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
+            peak_heads.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
         peak_effs  = []
-        for key in nomHCurvePoliDict.keys():
+        for key in self.nomHCurvePoliDict.keys():
             max_q       = np.max(nomHCurvePtsDict[key][:,0])
             q_list      = np.linspace(0, max_q, 10)
-            head_poli   = nomHCurvePoliDict[key]
+            head_poli   = self.nomHCurvePoliDict[key]
             eff_poli    = self.nomECurvePoliDict[key]
             opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
             peak_effs.append(eff_poli(opti_result.x[0]))
@@ -81,7 +81,7 @@ class wds():
         # ----- ----- ----- ----- -----
         # Tweaking reward
         # ----- ----- ----- ----- -----
-        #maxReward   = 5
+        # maxReward   = 5
         # ----- ----- ----- ----- -----
         self.maxReward   = +1
         self.minReward   = -1
@@ -91,14 +91,14 @@ class wds():
         self.metadata       = None
         self.totalDemandLo  = total_demand_lo
         self.totalDemandHi  = total_demand_hi
-        self.speedIncrement = speed_increment
+        self.speedIncrement = speed_increment # increment of pump speed, can adjust
         self.speedLimitLo   = .7
         self.speedLimitHi   = 1.2
         self.validSpeeds   = np.arange(
                                 self.speedLimitLo,
                                 self.speedLimitHi+.001,
                                 self.speedIncrement,
-                                dtype=np.float32)
+                                dtype=np.float32) # the speeds that can choose from 
         self.resetOrigPumpSpeeds= reset_orig_pump_speeds
         self.resetOrigDemands   = reset_orig_demands
         self.optimized_speeds   = np.empty(shape=(len(self.pumpGroup)),
@@ -285,7 +285,7 @@ class wds():
                 polinomials[curve]  = np.polyfit(
                     pts_dict[curve][:,0], pts_dict[curve][:,1], degree)
         return polinomials
-
+# read the curves to dict
     def get_performance_curve_points(self):
         """Reader for H(Q) and P(Q) curves."""
         head_curves = dict()
@@ -306,6 +306,7 @@ class wds():
             else:
                 print("Error, curve is either head nor efficiency")
         # Checking consistency
+        # Mistake here, should compare one by one
         for head_key in head_curves.keys():
             if all(head_key != eff_key for eff_key in eff_curves.keys()):
                 print('\nInconsistency in H(Q) and P(Q) curves.\n')
