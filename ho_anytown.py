@@ -94,7 +94,7 @@ def optimize_agent(trial):
     n_episodes, reward_sum = 0, 0.0
 
     env.randomize_demands()
-    obs = env.reset(training=False)
+    obs = env.restoreStateAndObserve(training=False)
     while n_episodes < 50:
         action, _ = model.predict(obs)
         obs, reward, done, _ = env.step(action, training=False)
@@ -103,7 +103,7 @@ def optimize_agent(trial):
             rewards.append(reward)
             n_episodes += 1
             env.randomize_demands()
-            obs = env.reset(training=False)
+            obs = env.restoreStateAndObserve(training=False)
 
     mean_reward = np.mean(rewards)
     trial.report(-1 * mean_reward)

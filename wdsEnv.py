@@ -98,7 +98,7 @@ class wds():
                                 self.speedLimitLo,
                                 self.speedLimitHi+.001,
                                 self.speedIncrement,
-                                dtype=np.float32) # the speeds that can choose from 
+                                dtype=np.float32) # the speeds that can choose
         self.resetOrigPumpSpeeds= reset_orig_pump_speeds
         self.resetOrigDemands   = reset_orig_demands
         self.optimized_speeds   = np.empty(shape=(len(self.pumpGroup)),
@@ -107,7 +107,7 @@ class wds():
         self.optimized_value    = np.nan
         self.previous_distance  = np.nan
         # initialization of {observation, steps, done}
-        observation = self.reset(training=False)
+        observation = self.restoreStateAndObserve(training=False)
         self.action_space   = gym.spaces.Discrete(2*self.dimensions+1)
         self.observation_space  = gym.spaces.Box(
                                     low     = -1,
@@ -125,7 +125,7 @@ class wds():
             maxfev      = 1)
 
     def step(self, action, training=True):
-        """ Reward computed from the Euclidean distance between the speed of the pumps
+        """ Compute reward from the Euclidean distance between the speed of the pumps
             and the optimized speeds."""
         self.steps  += 1
         self.done   = (self.steps == self.episodeLength)
@@ -160,7 +160,7 @@ class wds():
                             self.wds.pumps[pump].speed  -= self.speedIncrement
                         self.update_pump_speeds()
                         distance    = np.linalg.norm(self.optimized_speeds-self.pump_speeds)
-                        if distance < self.previous_distance:
+                        if distance < self.previous_distance: 
         # ----- ----- ----- ----- -----
         # Tweaking reward
         # ----- ----- ----- ----- -----
@@ -218,7 +218,7 @@ class wds():
         observation = self.get_observation()
         return observation, reward, self.done, {}
 
-    def reset(self, training=True):
+    def restoreStateAndObserve(self, training=True):
         if training:
             if self.resetOrigDemands:
                 self.restore_original_demands()
@@ -263,6 +263,7 @@ class wds():
         return [seed]
 
     def optimize_state(self):
+        """Optimize pump states with nm"""
         speeds, target_val, _   = nm.minimize(
             self.reward_to_scipy, self.dimensions)
         self.optimized_speeds   = speeds
@@ -355,13 +356,14 @@ class wds():
             junction.basedemand *= target_sum_of_demands / sum_of_random_demands
 
     def calculate_pump_efficiencies(self):
+        """calculate efficiencies from speeds"""
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
             curve_id    = pump.curve.uid[1:]
             pump_head   = pump.downstream_node.head - pump.upstream_node.head
             eff_poli    = self.nomECurvePoliDict[curve_id]
             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
-    # mapping uid->basedemand
+    # mapping junction uid->basedemand
     def build_demand_dict(self):
         demand_dict = dict()
         for junction in self.wds.junctions:

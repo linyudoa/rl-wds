@@ -121,7 +121,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        obs     = env.reset(training=False)
+        obs     = env.restoreStateAndObserve(training=False)
         rewards = np.empty(
                     shape = (env.episodeLength,),
                     dtype = np.float32)
@@ -157,7 +157,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             .format(best_metric, avg_reward))
         best_metric = avg_reward
         model.save(pathToBestModel)
-    obs = env.reset(training=True)
+    obs = env.restoreStateAndObserve(training=True)
     history.to_hdf(path_to_history, key=runId, mode='a')
     return avg_reward
 
@@ -173,7 +173,7 @@ def callback(_locals, _globals):
                     .format(best_metric, avg_reward))
                 best_metric = avg_reward
                 model.save(pathToBestModel)
-            obs = env.reset(training=True)
+            obs = env.restoreStateAndObserve(training=True)
 #        vld_history.to_hdf(pathToVldHistoryDB, key=runId, mode='a')
     return True
 
