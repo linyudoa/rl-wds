@@ -13,7 +13,7 @@ class wds():
             wds_name        = 'anytown_master',
             speed_increment = .05,
             episode_len     = 10,
-            pump_groups     = [['78', '79']],
+            pump_group     = [['78', '79']],
             total_demand_lo = .3,
             total_demand_hi = 1.1,
             reset_orig_pump_speeds  = False,
@@ -25,15 +25,15 @@ class wds():
             np.random.seed(self.seedNum)
         else:
             np.random.seed()
-
+    ## setting path to .inp of waternetwork
         pathToRoot  = os.path.dirname(os.path.realpath(__file__))
         pathToWDS   = os.path.join(pathToRoot, 'water_networks', wds_name+'.inp')
 
         self.wds        = Network(pathToWDS)
         self.demandDict = self.build_demand_dict()
-        self.pumpGroups = pump_groups
-        self.pump_speeds= np.ones(shape=(len(self.pumpGroups)), dtype=np.float32)
-        self.pumpEffs   = np.empty(shape=(len(self.pumpGroups)), dtype=np.float32)
+        self.pumpGroup = pump_group
+        self.pump_speeds= np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
+        self.pumpEffs   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
 
         nomHCurvePtsDict, nomECurvePtsDict = self.get_performance_curve_points()
         nomHCurvePoliDict       = self.fit_polinomials(
@@ -67,7 +67,7 @@ class wds():
         self.peakTotEff = np.prod(peak_effs)
 
         # Reward control
-        self.dimensions     = len(self.pumpGroups)
+        self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
         self.headLimitLo    = 15
         self.headLimitHi    = 120
@@ -101,7 +101,7 @@ class wds():
                                 dtype=np.float32)
         self.resetOrigPumpSpeeds= reset_orig_pump_speeds
         self.resetOrigDemands   = reset_orig_demands
-        self.optimized_speeds   = np.empty(shape=(len(self.pumpGroups)),
+        self.optimized_speeds   = np.empty(shape=(len(self.pumpGroup)),
                                     dtype=np.float32)
         self.optimized_speeds.fill(np.nan)
         self.optimized_value    = np.nan
@@ -112,7 +112,7 @@ class wds():
         self.observation_space  = gym.spaces.Box(
                                     low     = -1,
                                     high    = +1,
-                                    shape   = (len(self.wds.junctions)+len(self.pumpGroups),),
+                                    shape   = (len(self.wds.junctions)+len(self.pumpGroup),),
                                     dtype   = np.float32)
 
         # for one-shot tests
@@ -134,10 +134,10 @@ class wds():
         if training:
             if group_id != self.dimensions:
                 self.n_siesta       = 0
-                first_pump_in_grp   = self.wds.pumps[self.pumpGroups[group_id][0]]
+                first_pump_in_grp   = self.wds.pumps[self.pumpGroup[group_id][0]]
                 if command == 0:
                     if first_pump_in_grp.speed < self.speedLimitHi:
-                        for pump in self.pumpGroups[group_id]:
+                        for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  += self.speedIncrement
                         self.update_pump_speeds()
                         distance    = np.linalg.norm(self.optimized_speeds-self.pump_speeds)
@@ -156,7 +156,7 @@ class wds():
                         reward  = self.bumpPenalty
                 else:
                     if first_pump_in_grp.speed > self.speedLimitLo:
-                        for pump in self.pumpGroups[group_id]:
+                        for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  -= self.speedIncrement
                         self.update_pump_speeds()
                         distance    = np.linalg.norm(self.optimized_speeds-self.pump_speeds)
@@ -196,16 +196,16 @@ class wds():
         else:
             if group_id != self.dimensions:
                 self.n_siesta       = 0
-                first_pump_in_grp   = self.wds.pumps[self.pumpGroups[group_id][0]]
+                first_pump_in_grp   = self.wds.pumps[self.pumpGroup[group_id][0]]
                 if command == 0:
                     if first_pump_in_grp.speed < self.speedLimitHi:
-                        for pump in self.pumpGroups[group_id]:
+                        for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  += self.speedIncrement
                     else:
                         self.n_bump += 1
                 else:
                     if first_pump_in_grp.speed > self.speedLimitLo:
-                        for pump in self.pumpGroups[group_id]:
+                        for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  -= self.speedIncrement
                     else:
                         self.n_bump += 1
@@ -236,7 +236,7 @@ class wds():
                 for pump in self.wds.pumps:
                     pump.speed  = initial_speed
             else:
-                for pump_grp in self.pumpGroups:
+                for pump_grp in self.pumpGroup:
                     initial_speed   = np.random.choice(self.validSpeeds)
                     for pump in pump_grp:
                         self.wds.pumps[pump].speed  = initial_speed
@@ -246,7 +246,7 @@ class wds():
                 for pump in self.wds.pumps:
                     pump.speed  = initial_speed
             else:
-                for pump_grp in self.pumpGroups:
+                for pump_grp in self.pumpGroup:
                     initial_speed   = np.random.choice(self.validSpeeds)
                     for pump in pump_grp:
                         self.wds.pumps[pump].speed  = initial_speed
@@ -293,25 +293,25 @@ class wds():
 
         # Loading data to dictionary
         for curve in self.wds.curves:
-            if curve.uid[0] == 'H': # this is an H(Q) curve
+            if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
                 head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
                     head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
                     head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
-        for curve in self.wds.curves:
-            if curve.uid[0] == 'E': # this is an E(Q) curve
+            elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
                 eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
                     eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
                     eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
-
+            else:
+                print("Error, curve is either head nor efficiency")
         # Checking consistency
         for head_key in head_curves.keys():
             if all(head_key != eff_key for eff_key in eff_curves.keys()):
                 print('\nInconsistency in H(Q) and P(Q) curves.\n')
                 raise IndexError
         return head_curves, eff_curves
-
+    
     def get_junction_heads(self):
         junc_heads = np.empty(
                         shape   = (len(self.wds.junctions),),
@@ -354,13 +354,13 @@ class wds():
             junction.basedemand *= target_sum_of_demands / sum_of_random_demands
 
     def calculate_pump_efficiencies(self):
-        for i, group in enumerate(self.pumpGroups):
+        for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
             curve_id    = pump.curve.uid[1:]
             pump_head   = pump.downstream_node.head - pump.upstream_node.head
             eff_poli    = self.nomECurvePoliDict[curve_id]
             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
-
+    # mapping uid->basedemand
     def build_demand_dict(self):
         demand_dict = dict()
         for junction in self.wds.junctions:
@@ -397,7 +397,7 @@ class wds():
             heads   = np.array([head for head in self.wds.junctions.head])
             invalid_heads_count = (np.count_nonzero(heads < self.headLimitLo) +
                 np.count_nonzero(heads > self.headLimitHi))
-            valid_heads_ratio   = 1 - (invalid_heads_count / len(heads))
+            valid_heads_ratio   = 1 - (invalid_heads_count / len(heads)) # calc valid head ratio
 
             total_demand    = sum(
                 [junction.basedemand for junction in self.wds.junctions])
@@ -418,7 +418,7 @@ class wds():
             a_min   = self.speedLimitLo,
             a_max   = self.speedLimitHi,
             out     = pump_speeds)
-        for group_id, pump_group in enumerate(self.pumpGroups):
+        for group_id, pump_group in enumerate(self.pumpGroup):
             for pump in pump_group:
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
         self.wds.solve()
@@ -433,7 +433,7 @@ class wds():
         return self.get_state_value_to_opti(np.asarray(pump_speeds)),
 
     def update_pump_speeds(self):
-        for i, pump_group in enumerate(self.pumpGroups):
+        for i, pump_group in enumerate(self.pumpGroup):
             self.pump_speeds[i] = self.wds.pumps[pump_group[0]].speed
         return self.pump_speeds
 

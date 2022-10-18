@@ -63,7 +63,7 @@ def optimize_agent(trial):
             wds_name        = hparams['env']['waterNet']+'_master',
             speed_increment = hparams['env']['speedIncrement'],
             episode_len     = hparams['env']['episodeLen'],
-            pump_groups     = hparams['env']['pumpGroups'],
+            pump_group     = hparams['env']['pumpGroups'],
             total_demand_lo = hparams['env']['totalDemandLo'],
             total_demand_hi = hparams['env']['totalDemandHi'],
             reset_orig_pump_speeds  = hparams['env']['resetOrigPumpSpeeds'],

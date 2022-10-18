@@ -175,7 +175,7 @@ class environment_wrapper(param.Parameterized):
             wds_name        = self.hparams['env']['waterNet']+'_master',
             speed_increment = self.hparams['env']['speedIncrement'],
             episode_len     = self.hparams['env']['episodeLen'],
-            pump_groups     = self.hparams['env']['pumpGroups'],
+            pump_group     = self.hparams['env']['pumpGroups'],
             total_demand_lo = self.hparams['env']['totalDemandLo'],
             total_demand_hi = self.hparams['env']['totalDemandHi'],
             reset_orig_pump_speeds  = resetOrigPumpSpeeds,
@@ -204,7 +204,7 @@ class environment_wrapper(param.Parameterized):
 
         num_of_juncs.value  = 'Number of junctions: {}'.format(str(len(wrapper.env.wds.junctions.uid)))
         num_of_pipes.value  = 'Number of pipes: {}'.format(str(len(wrapper.env.wds.pipes.uid)))
-        num_of_pumps.value  = 'Number of pump stations: {}'.format(str(len(wrapper.env.pumpGroups)))
+        num_of_pumps.value  = 'Number of pump stations: {}'.format(str(len(wrapper.env.pumpGroup)))
         return self.plot
 # calling opt methods
 class optimize_speeds(param.Parameterized):
