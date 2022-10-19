@@ -450,7 +450,7 @@ class wds():
         return self.pump_speeds
 
     def apply_real_world_model(self):
-        """Logic to imp for modifying wds structure"""
+        """Logic of imp for modifying wds structure"""
         # wrapper.env.store_some_structure(), store the original structure
         # wrapper.env.change_some_structure() should add a function here to change wds structure, edit the .inp file
         # self.hist_val_nm.append(wrapper.env.get_state_value())
