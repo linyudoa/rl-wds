@@ -73,7 +73,8 @@ class wds():
         self.headLimitLo    = 15
         self.headLimitHi    = 120
         self.maxHead        = np.max(peak_heads)
-        self.rewScale       = [4,4,2] # mut factors of head demand, tank, energy eff
+        self.rewScale       = [8,4,2] # mut factors of head demand, tank, energy eff
+        # 4,4,2   3.5,3.5,3     3,3,4     2.5,2.5,5
         self.baseReward     = +1
         self.bumpPenalty    = -1
         self.distanceRange  = .5
