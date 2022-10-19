@@ -259,6 +259,7 @@ class optimize_speeds(param.Parameterized):
             self.failed_steps_dqn   = len(self.hist_fail_counter_dqn)
 
     def callback_nm(self, fun):
+        """Called every iteration"""
         self.hist_nm.append(wrapper.env.wds.junctions.head)
         self.hist_val_nm.append(wrapper.env.get_state_value())
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -325,7 +326,12 @@ class optimize_speeds(param.Parameterized):
         res_box_opti.background = '#FF0000'
         self.store_bc()
         self.call_nm()
-        self.rew_nm = wrapper.env.get_state_value()
+        self.rew_nm = wrapper.env.get_state_value() # this place should be modified to wrapper.env.get_state_value_real(); the param is set for what?
+        # wrapper.env.apply_real_world_model() should be called, contains following API:
+            # wrapper.env.store_some_structure(), store the original structure
+            # wrapper.env.change_some_structure() should add a function here to change wds structure, edit the .inp file
+            # self.hist_val_nm.append(wrapper.env.get_state_value())
+            # wrapper.env.restore_some_structure(), edit the .inp file back
         self.nm_dta = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.nm_dta, 30, 90, title='m', figtitle='Nodal head')

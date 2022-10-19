@@ -432,7 +432,6 @@ class wds():
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
         self.wds.solve()
         return self.get_state_value()
-
     def reward_to_scipy(self, pump_speeds):
         """Only minimization allowed."""
         return -self.get_state_value_to_opti(pump_speeds)
@@ -449,3 +448,11 @@ class wds():
     def get_pump_speeds(self):
         self.update_pump_speeds()
         return self.pump_speeds
+
+    def apply_real_world_model(self):
+        """Logic to imp for modifying wds structure"""
+        # wrapper.env.store_some_structure(), store the original structure
+        # wrapper.env.change_some_structure() should add a function here to change wds structure, edit the .inp file
+        # self.hist_val_nm.append(wrapper.env.get_state_value())
+        # wrapper.env.restore_some_structure(), edit the .inp file back
+        return 0
