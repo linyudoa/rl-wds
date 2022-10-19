@@ -56,6 +56,7 @@ class wds():
             opti_result = minimize(
                 -self.nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
             peak_heads.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
+        self.peakTotHeads = np.prod(peak_heads)
         peak_effs  = []
         for key in self.nomHCurvePoliDict.keys():
             max_q       = np.max(nomHCurvePtsDict[key][:,0])
@@ -72,7 +73,7 @@ class wds():
         self.headLimitLo    = 15
         self.headLimitHi    = 120
         self.maxHead        = np.max(peak_heads)
-        self.rewScale       = [5,8,3] # mut factors of eff, head, pump
+        self.rewScale       = [4,4,2] # mut factors of head demand, tank, energy eff
         self.baseReward     = +1
         self.bumpPenalty    = -1
         self.distanceRange  = .5
@@ -106,8 +107,9 @@ class wds():
         self.optimized_speeds.fill(np.nan)
         self.optimized_value    = np.nan
         self.previous_distance  = np.nan
+        self.pump_heads = [] # pump leverage to calculate
         # initialization of {observation, steps, done}
-        observation = self.restoreStateAndObserve(training=False)
+        observation = self.reset(training=False)
         self.action_space   = gym.spaces.Discrete(2*self.dimensions+1)
         self.observation_space  = gym.spaces.Box(
                                     low     = -1,
@@ -218,7 +220,7 @@ class wds():
         observation = self.get_observation()
         return observation, reward, self.done, {}
 
-    def restoreStateAndObserve(self, training=True):
+    def reset(self, training=True):
         if training:
             if self.resetOrigDemands:
                 self.restore_original_demands()
@@ -360,7 +362,7 @@ class wds():
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
             curve_id    = pump.curve.uid[1:]
-            pump_head   = pump.downstream_node.head - pump.upstream_node.head
+            self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
             eff_poli    = self.nomECurvePoliDict[curve_id]
             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
     # mapping junction uid->basedemand
@@ -409,12 +411,15 @@ class wds():
             demand_to_total = total_demand / (total_demand+total_tank_flow)
 
             total_efficiency    = np.prod(self.pumpEffs)
-            reward  = ( self.rewScale[0] * total_efficiency / self.peakTotEff +
-                        self.rewScale[1] * valid_heads_ratio + 
-                        self.rewScale[2] * demand_to_total) / sum(self.rewScale)
+            total_pumpHeads = np.prod(self.pump_heads)
+            reward  = ( self.rewScale[0] * valid_heads_ratio +
+                        self.rewScale[1] * demand_to_total + 
+                        self.rewScale[2] * 
+                        (total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads)) / sum(self.rewScale)
         else:
             reward  = 0
         return reward
+        
 # restrict pump speed to limits and call .get_state_value()
     def get_state_value_to_opti(self, pump_speeds):
         np.clip(a   = pump_speeds,

@@ -195,7 +195,7 @@ class environment_wrapper(param.Parameterized):
             self.sel_dmd == 'Original demands',
             self.sel_spd == 'Original speeds'
         )
-        self.env.restoreStateAndObserve(training=True)
+        self.env.reset(training=True)
 
         plot_data   = assemble_plot_data(wrapper.env.wds.junctions.head)
         self.plot   = build_plot_from_data(plot_data, self.dmd_lo, self.dmd_hi, 'm^3/h', figtitle='Nodal demand', palette='Magma10')
