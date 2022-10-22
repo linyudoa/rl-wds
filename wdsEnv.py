@@ -1,9 +1,11 @@
 # -* coding: utf-8 -*-
 import os
+import shutil
 import numpy as np
 import scipy.stats as stats
 from scipy.optimize import minimize
 import gym.spaces
+import uuid
 from epynet import Network
 from opti_algorithms import nm, rs
 
@@ -26,14 +28,17 @@ class wds():
         else:
             np.random.seed()
     ## setting path to .inp of waternetwork
-        pathToRoot  = os.path.dirname(os.path.realpath(__file__))
-        pathToWDS   = os.path.join(pathToRoot, 'water_networks', wds_name+'.inp')
+        self.pathToRoot  = os.path.dirname(os.path.realpath(__file__))
+        self.wds_name = wds_name
+        self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'.inp')
 
-        self.wds        = Network(pathToWDS)
+        self.wds        = Network(self.pathToWDS)
         self.demandDict = self.build_demand_dict()
         self.pumpGroup = pump_group
         self.pump_speeds= np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
         self.pumpEffs   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
+        self.tmpfile_name = ""
+        self.pathToTmpWds = ""
 
         nomHCurvePtsDict, nomECurvePtsDict = self.get_performance_curve_points()
         self.nomHCurvePoliDict       = self.fit_polinomials(
@@ -398,6 +403,10 @@ class wds():
 
     def get_state_value(self):
         self.calculate_pump_efficiencies()
+        result = self.calc_reward()
+        return result
+
+    def calc_reward(self):
         pump_ok = (self.pumpEffs < 1).all() and (self.pumpEffs > 0).all()
         if pump_ok:
             heads   = np.array([head for head in self.wds.junctions.head])
@@ -413,13 +422,16 @@ class wds():
 
             total_efficiency    = np.prod(self.pumpEffs)
             total_pumpHeads = np.prod(self.pump_heads)
-            reward  = ( self.rewScale[0] * valid_heads_ratio +
-                        self.rewScale[1] * demand_to_total + 
-                        self.rewScale[2] * 
-                        (total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads)) / sum(self.rewScale)
+
+            valid_heads_score = valid_heads_ratio
+            tank_usage_score = demand_to_total
+            energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads
+            result  = ( self.rewScale[0] * valid_heads_score + 
+                        self.rewScale[1] * tank_usage_score + 
+                        self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
         else:
-            reward  = 0
-        return reward
+            result = 0
+        return result
         
 # restrict pump speed to limits and call .get_state_value()
     def get_state_value_to_opti(self, pump_speeds):
@@ -448,11 +460,31 @@ class wds():
     def get_pump_speeds(self):
         self.update_pump_speeds()
         return self.pump_speeds
+    
+    def create_tmp_file(self):
+        self.tmpfile_name = self.wds_name + uuid.uuid4()
+        self.pathToTmpWds   = os.path.join(self.pathToRoot, 'water_networks', self.tmpfile_name + '.inp')
+        open(self.pathToTmpWds, "w+")
 
-    def apply_real_world_model(self):
+    def store_original_structure(self):
+        assert(self.pathToTmpWds != "")
+        shutil.copy(self.pathToWDS, self.pathToTmpWds)
+
+    def restore_original_structure(self):
+        assert(self.pathToTmpFile != "")
+        shutil.copy(self.pathToTmpWds, self.pathToWDS)
+        self.wds = Network(self.pathToWDS)
+
+    def append_real_reward(self, dict):
+        dict.append(self.get_state_value())
+
+    def mod_wds_N(self):
+        self.wds.delete_link()
+
+    def modeling_real_world_wds(self):
         """Logic of imp for modifying wds structure"""
-        # wrapper.env.store_some_structure(), store the original structure
+        # wrapper.env.store_original_structure(), store the original structure
         # wrapper.env.change_some_structure() should add a function here to change wds structure, edit the .inp file
-        # self.hist_val_nm.append(wrapper.env.get_state_value())
-        # wrapper.env.restore_some_structure(), edit the .inp file back
+        # wrapper.env.append_real_reward(wrapper.env.get_state_value())
+        # wrapper.env.restore_original_structure(), edit the .inp file back
         return 0

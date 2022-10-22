@@ -172,15 +172,15 @@ class environment_wrapper(param.Parameterized):
             self.loaded_wds = wds_name
 
         self.env = wds(
-            wds_name        = self.hparams['env']['waterNet']+'_master',
-            speed_increment = self.hparams['env']['speedIncrement'],
-            episode_len     = self.hparams['env']['episodeLen'],
-            pump_group     = self.hparams['env']['pumpGroups'],
-            total_demand_lo = self.hparams['env']['totalDemandLo'],
-            total_demand_hi = self.hparams['env']['totalDemandHi'],
-            reset_orig_pump_speeds  = resetOrigPumpSpeeds,
-            reset_orig_demands      = resetOrigDemands
-            )
+            wds_name        = 'anytown_master',
+            speed_increment = .05,
+            episode_len     = 10,
+            pump_group     = [['78', '79']],
+            total_demand_lo = .3,
+            total_demand_hi = 1.1,
+            reset_orig_pump_speeds  = False,
+            reset_orig_demands      = False,
+            seed    = None)
         self.junc_coords = self._assemble_junc_coordinates(self.env.wds)
         self.pipe_coords = self._assemble_pipe_coords(self.env.wds)
 
