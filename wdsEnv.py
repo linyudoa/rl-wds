@@ -462,7 +462,7 @@ class wds():
         return self.pump_speeds
     
     def create_tmp_file(self):
-        self.tmpfile_name = self.wds_name + uuid.uuid4()
+        self.tmpfile_name = self.wds_name + str(uuid.uuid4())
         self.pathToTmpWds   = os.path.join(self.pathToRoot, 'water_networks', self.tmpfile_name + '.inp')
         open(self.pathToTmpWds, "w+")
 
@@ -471,15 +471,24 @@ class wds():
         shutil.copy(self.pathToWDS, self.pathToTmpWds)
 
     def restore_original_structure(self):
-        assert(self.pathToTmpFile != "")
+        assert(self.pathToTmpWds != "")
         shutil.copy(self.pathToTmpWds, self.pathToWDS)
         self.wds = Network(self.pathToWDS)
 
-    def append_real_reward(self, dict):
-        dict.append(self.get_state_value())
+    def append_real_reward(self, lst):
+        self.wds = Network(self.pathToWDS)
+        self.wds.solve()
+        lst.append(self.get_state_value())
+        print("score of NM: ", self.get_state_value())
 
-    def mod_wds_N(self):
-        self.wds.delete_link()
+    def mod1_close_pipe3(self, lst):
+        self.create_tmp_file()
+        self.store_original_structure()
+        print("---------------------- trying to close pipe uid = ", 8, " ----------------------")
+        self.wds.delete_link("3")
+        self.wds.save_inputfile(self.pathToWDS)
+        self.append_real_reward(lst)
+        self.restore_original_structure()
 
     def modeling_real_world_wds(self):
         """Logic of imp for modifying wds structure"""

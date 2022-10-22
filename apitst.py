@@ -11,10 +11,20 @@ env = wdsEnv.wds(
         reset_orig_demands      = False,
         seed    = None)
 
-for pipe in env.wds.pipes:
-    print("pipe index: ", pipe.index)
-    print("uid: ", pipe.uid)
+# for pipe in env.wds.pipes:
+#     print("pipe index: ", pipe.index)
+#     print("uid: ", pipe.uid)
+#     print("pipe status: ", pipe.status)
+#     print("pipe diameter: ", pipe.diameter)
 
-for pump in env.wds.pumps:
-    print("pump index: ", pump.index)
-    print("uid: ", pump.uid)
+key = "40"
+print("---------------------- trying to close pipe uid = ", key, " ----------------------")
+env.wds.pipes[key].set_static_property(11, 0.0)
+print("pipe status of uid", key, " = ", env.wds.pipes[key].status)
+env.wds.solve()
+print("pipe status of uid", key, " = ", env.wds.pipes[key].status)
+
+# for pump in env.wds.pumps:
+#     print("pump index: ", pump.index)
+#     print("uid: ", pump.uid)
+#     print("pump props: ", pump.properties)

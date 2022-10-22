@@ -172,15 +172,15 @@ class environment_wrapper(param.Parameterized):
             self.loaded_wds = wds_name
 
         self.env = wds(
-            wds_name        = 'anytown_master',
-            speed_increment = .05,
-            episode_len     = 10,
-            pump_group     = [['78', '79']],
-            total_demand_lo = .3,
-            total_demand_hi = 1.1,
-            reset_orig_pump_speeds  = False,
-            reset_orig_demands      = False,
-            seed    = None)
+            wds_name        = self.hparams['env']['waterNet']+'_master',
+            speed_increment = self.hparams['env']['speedIncrement'],
+            episode_len     = self.hparams['env']['episodeLen'],
+            pump_group     = self.hparams['env']['pumpGroups'],
+            total_demand_lo = self.hparams['env']['totalDemandLo'],
+            total_demand_hi = self.hparams['env']['totalDemandHi'],
+            reset_orig_pump_speeds  = resetOrigPumpSpeeds,
+            reset_orig_demands      = resetOrigDemands
+            )
         self.junc_coords = self._assemble_junc_coordinates(self.env.wds)
         self.pipe_coords = self._assemble_pipe_coords(self.env.wds)
 
@@ -310,6 +310,7 @@ class optimize_speeds(param.Parameterized):
         self.store_bc()
         self.call_dqn()
         self.rew_dqn    = wrapper.env.get_state_value()
+        wrapper.env.mod1_close_pipe3(self.hist_val_dqn)
         self.dqn_dta    = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.dqn_dta, 30, 90, title='m', figtitle='Nodal head')
@@ -327,11 +328,7 @@ class optimize_speeds(param.Parameterized):
         self.store_bc()
         self.call_nm()
         self.rew_nm = wrapper.env.get_state_value() # this place should be modified to wrapper.env.get_state_value_real(); the param is set for what?
-        # wrapper.env.apply_real_world_model() should be called, contains following API:
-            # wrapper.env.store_some_structure(), store the original structure
-            # wrapper.env.change_some_structure() should add a function here to change wds structure, edit the .inp file
-            # self.hist_val_nm.append(wrapper.env.get_state_value())
-            # wrapper.env.restore_some_structure(), edit the .inp file back
+        wrapper.env.mod1_close_pipe3(self.hist_val_nm)
         self.nm_dta = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.nm_dta, 30, 90, title='m', figtitle='Nodal head')
@@ -344,11 +341,11 @@ class optimize_speeds(param.Parameterized):
 
     @param.depends('act_opti')
     def read_dqn_rew(self):
-        return 'Final state value: {:.3f}'.format(self.hist_val_dqn[-1])
+        return 'Real state value: {:.3f}'.format(self.hist_val_dqn[-1])
 
     @param.depends('act_opti')
     def read_nm_rew(self):
-        return 'Final state value: {:.3f}'.format(self.hist_val_nm[-1])
+        return 'Real state value: {:.3f}'.format(self.hist_val_nm[-1])
 
     @param.depends('act_opti')
     def read_dqn_evals(self):
