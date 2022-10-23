@@ -310,7 +310,7 @@ class optimize_speeds(param.Parameterized):
         self.store_bc()
         self.call_dqn()
         self.rew_dqn    = wrapper.env.get_state_value()
-        wrapper.env.mod2_randomize_wds_roughness(self.hist_val_dqn, 0, 10)
+        wrapper.env.mod1_close_pipeN(self.hist_val_dqn, 1)
         self.dqn_dta    = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.dqn_dta, 30, 90, title='m', figtitle='Nodal head')
@@ -328,7 +328,7 @@ class optimize_speeds(param.Parameterized):
         self.store_bc()
         self.call_nm()
         self.rew_nm = wrapper.env.get_state_value() # this place should be modified to wrapper.env.get_state_value_real(); the param is set for what?
-        wrapper.env.calc_reward_and_restore_wds(self.hist_val_nm)
+        wrapper.env.mod1_close_pipeN(self.hist_val_nm, 1)
         self.nm_dta = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.nm_dta, 30, 90, title='m', figtitle='Nodal head')

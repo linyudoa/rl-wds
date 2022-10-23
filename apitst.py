@@ -18,20 +18,13 @@ env = wdsEnv.wds(
 #     print("pipe status: ", pipe.status)
 #     print("pipe diameter: ", pipe.diameter)
 
-key = "4"
 prop_code = 2
-print("original roughness of pipe", key, " = ", env.wds.pipes[key].get_property(prop_code))
-noise = random.gauss(0, 10)
+mu = 0
+sigma = 10
+print("score", env.get_state_value())
 print("---------------------- trying to add noise ----------------------")
-env.wds.solve()
+env.randomize_wds_roughness(mu, sigma)
 print("score", env.get_state_value())
-env.wds.pipes[key].set_static_property(2, env.wds.pipes[key].get_property(prop_code) + noise)
-env.wds.solve()
-print("score", env.get_state_value())
-print("new roughness", " = ", env.wds.pipes[key].get_property(prop_code))
-env.wds.solve()
-env.wds.solve()
-print("new roughness", " = ", env.wds.pipes[key].get_property(prop_code))
 
 # for pump in env.wds.pumps:
 #     print("pump index: ", pump.index)

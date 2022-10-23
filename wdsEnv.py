@@ -463,7 +463,7 @@ class wds():
         self.update_pump_speeds()
         return self.pump_speeds
     
-    def create_tmp_file(self):
+    def create_cpy_file(self):
         self.tmpfile_name = self.wds_name + str(uuid.uuid4())
         self.pathToTmpWds   = os.path.join(self.pathToRoot, 'water_networks', self.tmpfile_name + '.inp')
         open(self.pathToTmpWds, "w+")
@@ -477,10 +477,13 @@ class wds():
         shutil.copy(self.pathToTmpWds, self.pathToWDS)
         self.wds = Network(self.pathToWDS)
         self.wds.reset()
+        os.unlink(self.pathToTmpWds)
 
     def append_real_reward(self, lst):
-        lst.append(self.get_state_value())
-        print("score", self.get_state_value())
+        val = self.get_state_value()
+        self.wds.solve()
+        lst.append(val)
+        print("score", val)
 
     def change_pipe_status(self, num):
         key = str(num)
@@ -495,23 +498,26 @@ class wds():
 
     def calc_reward_and_restore_wds(self, lst):
         self.append_real_reward(lst)
-        self.restore_original_structure()
+        self.wds.close()
+        self.wds = Network(self.pathToWDS)
 
-    def mod1_close_pipe3(self, lst):
-        self.create_tmp_file()
+    def mod1_close_pipeN(self, lst, num):
+        self.create_cpy_file()
         self.store_original_structure()
-        print("---------------------- trying to close pipe uid = ", 3, " ----------------------")
-        self.change_pipe_status(3)
+        print("---------------------- trying to close pipe uid = ", num, " ----------------------")
+        self.change_pipe_status(num)
         self.wds.save_inputfile(self.pathToWDS)
         self.append_real_reward(lst)
         self.restore_original_structure()
 
     def mod2_randomize_wds_roughness(self, lst, mu, sigma):
-        self.create_tmp_file()
+        self.create_cpy_file()
         self.store_original_structure()
         print("---------------------- trying to change roughness of WDS for dqn ----------------------")
         self.randomize_wds_roughness(mu, sigma)
         self.wds.save_inputfile(self.pathToWDS)
+        self.wds = None
+        self.wds = Network(self.pathToWDS)
         self.append_real_reward(lst)
 
     def modeling_real_world_wds(self):
