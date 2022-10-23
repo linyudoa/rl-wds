@@ -1,4 +1,5 @@
 import wdsEnv
+import random
 
 env = wdsEnv.wds(
         wds_name        = 'anytown_master',
@@ -17,12 +18,16 @@ env = wdsEnv.wds(
 #     print("pipe status: ", pipe.status)
 #     print("pipe diameter: ", pipe.diameter)
 
-key = "40"
-print("---------------------- trying to close pipe uid = ", key, " ----------------------")
-env.wds.pipes[key].set_static_property(11, 0.0)
-print("pipe status of uid", key, " = ", env.wds.pipes[key].status)
+key = "4"
+prop_code = 2
+print("original roughness of pipe", key, " = ", env.wds.pipes[key].get_property(prop_code))
+noise = random.gauss(0, 10)
+print("---------------------- trying to add noise ----------------------")
+env.wds.pipes[key].set_static_property(2, env.wds.pipes[key].get_property(prop_code) + noise)
+print("new roughness", " = ", env.wds.pipes[key].get_property(prop_code))
 env.wds.solve()
-print("pipe status of uid", key, " = ", env.wds.pipes[key].status)
+env.wds.solve()
+print("new roughness", " = ", env.wds.pipes[key].get_property(prop_code))
 
 # for pump in env.wds.pumps:
 #     print("pump index: ", pump.index)

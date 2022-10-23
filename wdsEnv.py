@@ -6,6 +6,7 @@ import scipy.stats as stats
 from scipy.optimize import minimize
 import gym.spaces
 import uuid
+import random
 from epynet import Network
 from opti_algorithms import nm, rs
 
@@ -479,16 +480,39 @@ class wds():
         self.wds = Network(self.pathToWDS)
         self.wds.solve()
         lst.append(self.get_state_value())
-        print("score of NM: ", self.get_state_value())
+        print("score", self.get_state_value())
+
+    def change_pipe_status(self, num):
+        key = str(num)
+        self.wds.delete_link(key)
+
+    def randomize_wds_roughness(self, mu, sigma):
+        prop_code = 2
+        for pipe in self.wds.pipes:
+            noise = random.gauss(mu, sigma)
+            newVal = pipe.get_property(prop_code) + noise
+            pipe.set_static_property(prop_code, newVal)
+
+    def calc_reward_and_restore_wds(self, lst):
+        self.append_real_reward(lst)
+        self.restore_original_structure()
 
     def mod1_close_pipe3(self, lst):
         self.create_tmp_file()
         self.store_original_structure()
-        print("---------------------- trying to close pipe uid = ", 8, " ----------------------")
-        self.wds.delete_link("3")
+        print("---------------------- trying to close pipe uid = ", 3, " ----------------------")
+        self.change_pipe_status(3)
         self.wds.save_inputfile(self.pathToWDS)
         self.append_real_reward(lst)
         self.restore_original_structure()
+
+    def mod2_randomize_wds_roughness(self, lst, mu, sigma):
+        self.create_tmp_file()
+        self.store_original_structure()
+        print("---------------------- trying to change roughness of WDS for dqn ----------------------")
+        self.randomize_wds_roughness(mu, sigma)
+        self.wds.save_inputfile(self.pathToWDS)
+        self.append_real_reward(lst)
 
     def modeling_real_world_wds(self):
         """Logic of imp for modifying wds structure"""
