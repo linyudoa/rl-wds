@@ -403,6 +403,7 @@ class wds():
         return eff_ratio, valid_heads_ratio, demand_to_total
 
     def get_state_value(self):
+        self.wds.solve()
         self.calculate_pump_efficiencies()
         result = self.calc_reward()
         return result
@@ -475,10 +476,9 @@ class wds():
         assert(self.pathToTmpWds != "")
         shutil.copy(self.pathToTmpWds, self.pathToWDS)
         self.wds = Network(self.pathToWDS)
+        self.wds.reset()
 
     def append_real_reward(self, lst):
-        self.wds = Network(self.pathToWDS)
-        self.wds.solve()
         lst.append(self.get_state_value())
         print("score", self.get_state_value())
 
