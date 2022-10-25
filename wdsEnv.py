@@ -467,12 +467,13 @@ class wds():
         self.tmpfile_name = self.wds_name + str(uuid.uuid4())
         self.pathToTmpWds   = os.path.join(self.pathToRoot, 'water_networks', self.tmpfile_name + '.inp')
         open(self.pathToTmpWds, "w+")
+        self.store_original_structure()
 
     def store_original_structure(self):
         assert(self.pathToTmpWds != "")
         shutil.copy(self.pathToWDS, self.pathToTmpWds)
 
-    def restore_original_structure(self):
+    def restore_structure(self):
         assert(self.pathToTmpWds != "")
         shutil.copy(self.pathToTmpWds, self.pathToWDS)
         self.wds = Network(self.pathToWDS)
@@ -481,7 +482,6 @@ class wds():
 
     def append_real_reward(self, lst):
         val = self.get_state_value()
-        self.wds.solve()
         lst.append(val)
         print("score", val)
 
@@ -490,6 +490,7 @@ class wds():
         self.wds.delete_link(key)
 
     def randomize_wds_roughness(self, mu, sigma):
+        random.seed()
         prop_code = 2
         for pipe in self.wds.pipes:
             noise = random.gauss(mu, sigma)
@@ -498,8 +499,7 @@ class wds():
 
     def calc_reward_and_restore_wds(self, lst):
         self.append_real_reward(lst)
-        self.wds.close()
-        self.wds = Network(self.pathToWDS)
+        self.restore_structure()
 
     def mod1_close_pipeN(self, lst, num):
         self.create_cpy_file()
@@ -508,17 +508,18 @@ class wds():
         self.change_pipe_status(num)
         self.wds.save_inputfile(self.pathToWDS)
         self.append_real_reward(lst)
-        self.restore_original_structure()
+        self.restore_structure()
 
     def mod2_randomize_wds_roughness(self, lst, mu, sigma):
         self.create_cpy_file()
         self.store_original_structure()
-        print("---------------------- trying to change roughness of WDS for dqn ----------------------")
+        print("---------------------- trying to change roughness of WDS ----------------------")
         self.randomize_wds_roughness(mu, sigma)
         self.wds.save_inputfile(self.pathToWDS)
         self.wds = None
         self.wds = Network(self.pathToWDS)
         self.append_real_reward(lst)
+        # self.restore_structure()
 
     def modeling_real_world_wds(self):
         """Logic of imp for modifying wds structure"""
