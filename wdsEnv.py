@@ -303,24 +303,24 @@ class wds():
 
         # Loading data to dictionary
         for curve in self.wds.curves:
-            if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
-                head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
+            if curve.uid[-1] != 'E': # starting with 'H' means this is an H(Q) curve
+                head_curves[curve.uid[:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
-                    head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
-                    head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
-            elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
-                eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
+                    head_curves[curve.uid[:]][i, 0]    = op_pnt[0]
+                    head_curves[curve.uid[:]][i, 1]    = op_pnt[1]
+            elif curve.uid[-1] == 'E': # starting with 'E' means this is an E(Q) curve
+                eff_curves[curve.uid[:-1]]   = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
-                    eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
-                    eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
+                    eff_curves[curve.uid[:-1]][i, 0] = op_pnt[0]
+                    eff_curves[curve.uid[:-1]][i, 1] = op_pnt[1]
             else:
                 print("Error, curve is either head nor efficiency")
         # Checking consistency
         # Mistake here, should compare one by one
-        for head_key in head_curves.keys():
-            if all(head_key != eff_key for eff_key in eff_curves.keys()):
-                print('\nInconsistency in H(Q) and P(Q) curves.\n')
-                raise IndexError
+        # for head_key in head_curves.keys():
+        #     if all(head_key != eff_key for eff_key in eff_curves.keys()):
+        #         print('\nInconsistency in H(Q) and P(Q) curves.\n')
+        #         raise IndexError
         return head_curves, eff_curves
     
     def get_junction_heads(self):
