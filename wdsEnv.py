@@ -368,7 +368,9 @@ class wds():
         """calculate efficiencies from speeds"""
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
-            curve_id    = pump.curve.uid[1:]
+            curve_id    = pump.curve.uid[:] 
+            if (curve_id[-1] == 'E'):
+                curve_id = curve_id[:-1]
             self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
             eff_poli    = self.nomECurvePoliDict[curve_id]
             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
