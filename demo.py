@@ -31,7 +31,6 @@ def assemble_plot_data(junc_prop):
         )
     return plot_data
 
-# nodal points plotting from data
 def build_plot_from_data(data, min_prop=None, max_prop=None, title=None, figtitle=None, palette='Viridis10'):
     if not min_prop:
         min_prop = min(data.data['junc_prop'])
@@ -73,6 +72,7 @@ class environment_wrapper(param.Parameterized):
         default = "Anytown",
         objects = ["Anytown", "D-Town"]
         )
+
     sel_dmd     = param.ObjectSelector(
         default = "Original demands",
         objects = ['Original demands', 'Randomized demands']
@@ -90,7 +90,7 @@ class environment_wrapper(param.Parameterized):
         self.loaded_wds = ''
         self.head_lmt_lo= 15
         self.head_lmt_hi= 150
-# resolving wds to data grid
+
     def _assemble_junc_coordinates(self, wds):
         junc_x = []
         junc_y = []
@@ -145,12 +145,12 @@ class environment_wrapper(param.Parameterized):
                 pipe_z.append(valve.to_node.elevation)
                 pipe_z.append(float('nan'))
         return {'x': pipe_x, 'y': pipe_y, 'z': pipe_z}
-# loding rl model and pipe model
+
     def load_env(self, wds_name, resetOrigDemands, resetOrigPumpSpeeds):
         if wds_name != self.loaded_wds:
             if wds_name == 'Anytown':
                 hyperparams_fn  = 'anytownMaster'
-                model_fn        = 'anytownHO1-best'
+                model_fn        = 'anytownMaster8-best'
                 self.dmd_lo     = 30
                 self.dmd_hi     = 80
             elif wds_name == 'D-Town':
@@ -179,7 +179,7 @@ class environment_wrapper(param.Parameterized):
             total_demand_lo = self.hparams['env']['totalDemandLo'],
             total_demand_hi = self.hparams['env']['totalDemandHi'],
             reset_orig_pump_speeds  = resetOrigPumpSpeeds,
-            reset_orig_demands      = resetOrigDemands,
+            reset_orig_demands      = resetOrigDemands
             )
         self.junc_coords = self._assemble_junc_coordinates(self.env.wds)
         self.pipe_coords = self._assemble_pipe_coords(self.env.wds)
@@ -206,7 +206,7 @@ class environment_wrapper(param.Parameterized):
         num_of_pipes.value  = 'Number of pipes: {}'.format(str(len(wrapper.env.wds.pipes.uid)))
         num_of_pumps.value  = 'Number of pump stations: {}'.format(str(len(wrapper.env.pumpGroup)))
         return self.plot
-# calling opt methods
+
 class optimize_speeds(param.Parameterized):
     act_opti    = param.Action(
         lambda x: x.param.trigger('act_opti'),
@@ -230,7 +230,7 @@ class optimize_speeds(param.Parameterized):
         wrapper.env.wds.solve()
         wrapper.env.steps   = 0
         wrapper.env.done    = False
-        obs                 = wrapper.env.get_observation() # getting wds state observation
+        obs                 = wrapper.env.get_observation()
         self.hist_dqn       = [wrapper.env.wds.junctions.head]
         self.hist_val_dqn   = [wrapper.env.get_state_value()]
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -259,7 +259,6 @@ class optimize_speeds(param.Parameterized):
             self.failed_steps_dqn   = len(self.hist_fail_counter_dqn)
 
     def callback_nm(self, fun):
-        """Called every iteration"""
         self.hist_nm.append(wrapper.env.wds.junctions.head)
         self.hist_val_nm.append(wrapper.env.get_state_value())
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -272,7 +271,7 @@ class optimize_speeds(param.Parameterized):
             'maxfev': 100,
             'xatol' : .005,
             'fatol' : .01}
-        wrapper.env.wds.solve() # needs to solve wds state
+        wrapper.env.wds.solve()
         self.hist_nm    = [wrapper.env.wds.junctions.head]
         self.hist_val_nm= [wrapper.env.get_state_value()]
         invalid_heads_count = (np.count_nonzero(wrapper.env.wds.junctions.head < wrapper.head_lmt_lo) +
@@ -302,7 +301,7 @@ class optimize_speeds(param.Parameterized):
     def restore_bc(self):
         wrapper.env.wds.junctions.basedemand    = self.orig_demands
         wrapper.env.wds.pumps.speed             = self.orig_speeds
-# visualize dqn || nm results
+
     @param.depends('act_opti')
     def plot_dqn(self):
         response_opti.value     = 'Computing, please wait.'
@@ -310,8 +309,7 @@ class optimize_speeds(param.Parameterized):
         self.store_bc()
         self.call_dqn()
         self.rew_dqn    = wrapper.env.get_state_value()
-        # wrapper.env.mod1_close_pipeN(self.hist_val_dqn, 1)
-        wrapper.env.mod2_randomize_wds_roughness(self.hist_val_nm, 5, 0.15)
+        print("reward of dqn is: ", self.rew_dqn)
         self.dqn_dta    = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.dqn_dta, 30, 90, title='m', figtitle='Nodal head')
@@ -328,9 +326,8 @@ class optimize_speeds(param.Parameterized):
         res_box_opti.background = '#FF0000'
         self.store_bc()
         self.call_nm()
-        self.rew_nm = wrapper.env.get_state_value() # this place should be modified to wrapper.env.get_state_value_real(); the param is set for what?
-        # wrapper.env.mod1_close_pipeN(self.hist_val_nm, 1)
-        wrapper.env.calc_reward_and_restore_wds(self.hist_val_nm)
+        self.rew_nm = wrapper.env.get_state_value()
+        print("reward of nm is: ", self.rew_nm)
         self.nm_dta = assemble_plot_data(wrapper.env.wds.junctions.head)
         if wrapper.loaded_wds == 'Anytown':
             plot    = build_plot_from_data(self.nm_dta, 30, 90, title='m', figtitle='Nodal head')
@@ -343,11 +340,11 @@ class optimize_speeds(param.Parameterized):
 
     @param.depends('act_opti')
     def read_dqn_rew(self):
-        return 'Real state value: {:.3f}'.format(self.hist_val_dqn[-1])
+        return 'Final state value: {:.3f}'.format(self.hist_val_dqn[-1])
 
     @param.depends('act_opti')
     def read_nm_rew(self):
-        return 'Real state value: {:.3f}'.format(self.hist_val_nm[-1])
+        return 'Final state value: {:.3f}'.format(self.hist_val_nm[-1])
 
     @param.depends('act_opti')
     def read_dqn_evals(self):
