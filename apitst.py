@@ -1,10 +1,14 @@
 from epynet import Network
 import wdsEnv
 
-pathToNetwork = "./water_networks/QDMaster.inp"
+pathToNetwork = "./water_networks/QDMaster1031_master.inp"
 
-pathToNetwork1 = "./water_networks/anytown_master.inp"
+wds = Network(pathToNetwork)
 
-wds = Network(pathToNetwork1)
+# wds.solve()
+node = wds.junctions["J90212_B"]
 
-wds.solve()
+# print(sum([demand for demand in wds.junctions.basedemand]))
+
+# for demand in wds.junctions.basedemand:
+#     print(demand)

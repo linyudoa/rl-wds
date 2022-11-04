@@ -1,0 +1,21 @@
+env:
+    waterNet        : QDMaster1031
+    speedIncrement  : .05
+    episodeLen      : 40
+    pumpGroups      : [['XJ-P2', 'XJ-P4']]
+    totalDemandLo   : 2.5
+    totalDemandHi   : 5
+    resetOrigDemands    : True
+    resetOrigPumpSpeeds : True
+model:
+    layers  : [48, 32, 12]
+    restore : None
+evaluation:
+    dbName      : qingdong_rnd
+training:
+    initLrnRate     : .0001
+    totalSteps      : 50000
+    gamma           : .99
+    batchSize       : 8
+    learningStarts  : 1000
+    bufferSize      : 25000
