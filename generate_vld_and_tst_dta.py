@@ -16,8 +16,8 @@ from deap import tools
 from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
-parser.add_argument('--params', default='QDMaster1031', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=10, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--params', default='anytownMaster', type=str, help="Name of the YAML file.")
+parser.add_argument('--nscenes', default=100, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -70,14 +70,14 @@ def generate_scenes(reset_orig_demands, n_scenes):
     demand_db = pd.DataFrame(
         np.empty(shape = (n_scenes, len(junction_ids))),
         columns = junction_ids)
-    if reset_orig_demands:
+    if reset_orig_demands: # retore to original demand series
         for i in range(n_scenes):
             env.restore_original_demands()
             demand_db.loc[i]    = env.wds.junctions.basedemand
     else:
         for i in range(n_scenes):
-            env.randomize_demands()
-            demand_db.loc[i]    = env.wds.junctions.basedemand
+            env.randomize_demands() # randomize demand for every single scene
+            demand_db.loc[i]    = env.wds.junctions.basedemand # store demands in the format of df series
     return demand_db
 
 def reward_to_scipy(pump_speeds):
