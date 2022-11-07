@@ -1,6 +1,7 @@
 from functools import reduce
 
 class MyParser():
+    """Resolve WDS state from input file"""
     def __init__(self,
             pathToInp):
         self.pathToInp = pathToInp
@@ -80,5 +81,5 @@ parser.readField("[PATTERNS]")
 parser.readField("[DEMANDS]")
 parser.summarizeField("[PATTERNS]")
 parser.summarizeField("[PATTERNS]")
-for i in range(100):
+for i in range(288):
     parser.demandSnapshot(i)
