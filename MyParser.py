@@ -59,6 +59,7 @@ class MyParser():
             print(len(field[key]))
     
     def demandSnapshot(self, i : int):
+        """Create nodal demand of timeStamp i"""
         mp = {}
         # print("Start to calc demands:==============================================================")
         for junc in self.demands.keys():
@@ -69,10 +70,13 @@ class MyParser():
             while demandIndex < len(self.demands[junc]):
                 patternId = self.demands[junc][patternIndex]
                 patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+                if (patternId not in self.patterns.keys()):
+                    print("Pattern illegal, should be in filed [PATTERNS]")
+                    return 
                 mp[junc] += float(self.demands[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
                 demandIndex += 2
                 patternIndex += 2
-        print("total demand of timestamp ", i, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        print("total demand of timestamp ", i+  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
 
 pathToWds = "water_networks/QDMaster1031_master.inp"
