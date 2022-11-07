@@ -1,3 +1,5 @@
+from functools import reduce
+
 class MyParser():
     def __init__(self,
             pathToInp):
@@ -55,10 +57,28 @@ class MyParser():
             print("Key: ", key)
             print(len(field[key]))
     
-
+    def demandSnapshot(self, i : int):
+        mp = {}
+        # print("Start to calc demands:==============================================================")
+        for junc in self.demands.keys():
+            demandIndex = 0
+            patternIndex = 1
+            if (junc not in mp.keys()):
+                mp[junc] = 0
+            while demandIndex < len(self.demands[junc]):
+                patternId = self.demands[junc][patternIndex]
+                patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+                mp[junc] += float(self.demands[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
+                demandIndex += 2
+                patternIndex += 2
+        print("total demand of timestamp ", i, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        return mp
 
 pathToWds = "water_networks/QDMaster1031_master.inp"
 parser = MyParser(pathToWds)
 parser.readField("[PATTERNS]")
 parser.readField("[DEMANDS]")
 parser.summarizeField("[PATTERNS]")
+parser.summarizeField("[PATTERNS]")
+for i in range(100):
+    parser.demandSnapshot(i)

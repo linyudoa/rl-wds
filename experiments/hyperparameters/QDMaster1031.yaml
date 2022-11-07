@@ -5,7 +5,7 @@ env:
     pumpGroups      : [['XJ-P2', 'XJ-P4']]
     totalDemandLo   : 2.5
     totalDemandHi   : 5
-    resetOrigDemands    : True
+    resetOrigDemands    : False
     resetOrigPumpSpeeds : True
 model:
     layers  : [48, 32, 12]
