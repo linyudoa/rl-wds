@@ -54,9 +54,9 @@ class MyParser():
         if (len(field) == 0):
             print("Field empty")
             return
-        for key in field.keys():
-            print("Key: ", key)
-            print(len(field[key]))
+        # for key in field.keys():
+        #     print("Key: ", key)
+        #     print(len(field[key]))
     
     def demandSnapshot(self, i : int):
         """Create nodal demand of timeStamp i"""
@@ -76,14 +76,14 @@ class MyParser():
                 mp[junc] += float(self.demands[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
                 demandIndex += 2
                 patternIndex += 2
-        print("total demand of timestamp ", i+  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        print("total demand of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
 
-pathToWds = "water_networks/QDMaster1031_master.inp"
-parser = MyParser(pathToWds)
-parser.readField("[PATTERNS]")
-parser.readField("[DEMANDS]")
-parser.summarizeField("[PATTERNS]")
-parser.summarizeField("[PATTERNS]")
-for i in range(288):
-    parser.demandSnapshot(i)
+# test code
+# pathToWds = "water_networks/QDMaster1031_master.inp"
+# parser = MyParser(pathToWds)
+# parser.readField("[PATTERNS]")
+# parser.readField("[DEMANDS]")
+# parser.summarizeField("[PATTERNS]")
+# for i in range(288):
+#     parser.demandSnapshot(i)

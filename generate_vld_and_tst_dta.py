@@ -16,8 +16,8 @@ from deap import tools
 from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
-parser.add_argument('--params', default='anytownMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=100, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--params', default='QDMaster1031', type=str, help="Name of the YAML file.")
+parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -76,7 +76,8 @@ def generate_scenes(reset_orig_demands, n_scenes):
             demand_db.loc[i]    = env.wds.junctions.basedemand
     else:
         for i in range(n_scenes):
-            env.randomize_demands() # randomize demand for every single scene
+            # env.randomize_demands()
+            env.generate_demandSnapshot(i) # randomize demand for every single scene
             demand_db.loc[i]    = env.wds.junctions.basedemand # store demands in the format of df series
     return demand_db
 
@@ -404,12 +405,13 @@ oneshot = fixed_step_size_random_search(
 
 def main():
     subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    subdf_de    = optimize_scenes(scene_df, de.maximize)
-    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
-    subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
+    # subdf_de    = optimize_scenes(scene_df, de.maximize)
+    # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    # subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
 
-    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
+    subdfs      = {'nm': subdf_nm}
+    # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
 

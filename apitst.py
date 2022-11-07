@@ -1,5 +1,4 @@
 from epynet import Network
-import wdsEnv
 
 pathToNetwork = "water_networks/QDMaster1031_master.inp"
 
