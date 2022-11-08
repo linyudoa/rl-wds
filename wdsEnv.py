@@ -37,7 +37,7 @@ class wds():
         self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'.inp')
 
         self.wds        = Network(self.pathToWDS)
-        self.generate_demandSnapshot(0) # using demand at timestamp 0 as original demand
+        # self.generate_demandSnapshot(0) # using demand at timestamp 0 as original demand
         self.demandDict = self.build_demand_dict()
         self.pumpGroup = pump_group
         self.pump_speeds= np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
@@ -242,6 +242,10 @@ class wds():
         return observation, reward, self.done, {}
 
     def reset(self, training=True):
+        if self.resetOrigPumpSpeeds:
+            initial_speed   = 1.
+        else:
+            initial_speed   = np.random.choice(self.validSpeeds)
         if training:
             if self.resetOrigDemands:
                 self.restore_original_demands()
@@ -253,26 +257,10 @@ class wds():
 #            if self.optimized_value == 0:
 #                self.optimized_value    = .01
 ## One-shot ends
-
-            if self.resetOrigPumpSpeeds:
-                initial_speed   = 1.
-                for pump in self.wds.pumps:
-                    pump.speed  = initial_speed
-            else:
-                for pump_grp in self.pumpGroup:
-                    initial_speed   = np.random.choice(self.validSpeeds)
-                    for pump in pump_grp:
-                        self.wds.pumps[pump].speed  = initial_speed
-        else:
-            if self.resetOrigPumpSpeeds:
-                initial_speed   = 1.
-                for pump in self.wds.pumps:
-                    pump.speed  = initial_speed
-            else:
-                for pump_grp in self.pumpGroup:
-                    initial_speed   = np.random.choice(self.validSpeeds)
-                    for pump in pump_grp:
-                        self.wds.pumps[pump].speed  = initial_speed
+        for pump_grp in self.pumpGroup:
+            initial_speed   = np.random.choice(self.validSpeeds)
+            for pump in pump_grp:
+                self.wds.pumps[pump].speed  = initial_speed
         self.wds.solve()
         observation = self.get_observation()
         self.done   = False
@@ -309,60 +297,60 @@ class wds():
                 polinomials[curve]  = np.polyfit(
                     pts_dict[curve][:,0], pts_dict[curve][:,1], degree)
         return polinomials
-# # read the curves to dict, original models
-#     def get_performance_curve_points(self):
-#         """Reader for H(Q) and P(Q) curves."""
-#         head_curves = dict()
-#         eff_curves  = dict()
-
-#         # Loading data to dictionary
-#         for curve in self.wds.curves:
-#             if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
-#                 head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
-#                 for i, op_pnt in enumerate(curve.values):
-#                     head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
-#                     head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
-#             elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
-#                 eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
-#                 for i, op_pnt in enumerate(curve.values):
-#                     eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
-#                     eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
-#             else:
-#                 print("Error, curve is either head nor efficiency") 
-#         # Checking consistency
-#         # Mistake here, should compare one by one
-#         for head_key in head_curves.keys():
-#             if all(head_key != eff_key for eff_key in eff_curves.keys()):
-#                 print('\nInconsistency in H(Q) and P(Q) curves.\n')
-#                 raise IndexError
-#         return head_curves, eff_curves
-    
+# read the curves to dict, original models
     def get_performance_curve_points(self):
-        """Reader for H(Q) and P(Q) curves. New models"""
+        """Reader for H(Q) and P(Q) curves."""
         head_curves = dict()
         eff_curves  = dict()
 
         # Loading data to dictionary
         for curve in self.wds.curves:
-            if curve.uid[-1] != 'E': # starting with 'H' means this is an H(Q) curve
-                head_curves[curve.uid[:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
+            if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
+                head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
-                    head_curves[curve.uid[:]][i, 0]    = op_pnt[0]
-                    head_curves[curve.uid[:]][i, 1]    = op_pnt[1]
-            elif curve.uid[-1] == 'E': # starting with 'E' means this is an E(Q) curve
-                eff_curves[curve.uid[:-1]]   = np.empty([len(curve.values), 2], dtype=np.float32)
+                    head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
+                    head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
+            elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
+                eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
-                    eff_curves[curve.uid[:-1]][i, 0] = op_pnt[0]
-                    eff_curves[curve.uid[:-1]][i, 1] = op_pnt[1]
+                    eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
+                    eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
             else:
-                print("Error, curve is either head nor efficiency")
+                print("Error, curve is either head nor efficiency") 
         # Checking consistency
         # Mistake here, should compare one by one
-        # for head_key in head_curves.keys():
-        #     if all(head_key != eff_key for eff_key in eff_curves.keys()):
-        #         print('\nInconsistency in H(Q) and P(Q) curves.\n')
-        #         raise IndexError
+        for head_key in head_curves.keys():
+            if all(head_key != eff_key for eff_key in eff_curves.keys()):
+                print('\nInconsistency in H(Q) and P(Q) curves.\n')
+                raise IndexError
         return head_curves, eff_curves
+    
+    # def get_performance_curve_points(self):
+    #     """Reader for H(Q) and P(Q) curves. New models"""
+    #     head_curves = dict()
+    #     eff_curves  = dict()
+
+    #     # Loading data to dictionary
+    #     for curve in self.wds.curves:
+    #         if curve.uid[-1] != 'E': # starting with 'H' means this is an H(Q) curve
+    #             head_curves[curve.uid[:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
+    #             for i, op_pnt in enumerate(curve.values):
+    #                 head_curves[curve.uid[:]][i, 0]    = op_pnt[0]
+    #                 head_curves[curve.uid[:]][i, 1]    = op_pnt[1]
+    #         elif curve.uid[-1] == 'E': # starting with 'E' means this is an E(Q) curve
+    #             eff_curves[curve.uid[:-1]]   = np.empty([len(curve.values), 2], dtype=np.float32)
+    #             for i, op_pnt in enumerate(curve.values):
+    #                 eff_curves[curve.uid[:-1]][i, 0] = op_pnt[0]
+    #                 eff_curves[curve.uid[:-1]][i, 1] = op_pnt[1]
+    #         else:
+    #             print("Error, curve is either head nor efficiency")
+    #     # Checking consistency
+    #     # Mistake here, should compare one by one
+    #     # for head_key in head_curves.keys():
+    #     #     if all(head_key != eff_key for eff_key in eff_curves.keys()):
+    #     #         print('\nInconsistency in H(Q) and P(Q) curves.\n')
+    #     #         raise IndexError
+    #     return head_curves, eff_curves
     
     def get_junction_heads(self):
         # junc_heads = np.empty(
@@ -416,35 +404,43 @@ class wds():
         
     def generate_demandSnapshot(self, i):
         """Generate demand from pattern with step index i"""
-        i %= 288
         parser = MyParser(self.pathToWDS)
         parser.readField("[PATTERNS]")
         parser.readField("[DEMANDS]")
-        parser.summarizeField("[PATTERNS]")
         demandMap = parser.demandSnapshot(i)
         for junction in self.wds.junctions:
             if (junction.uid in demandMap.keys()):
                 junction.basedemand = demandMap[junction.uid]
 
-# # for orig
-#     def calculate_pump_efficiencies(self):
-#         """calculate efficiencies from speeds"""
-#         for i, group in enumerate(self.pumpGroup):
-#             pump        = self.wds.pumps[group[0]]
-#             curve_id    = pump.curve.uid[1:]
-#             self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
-#             eff_poli    = self.nomECurvePoliDict[curve_id]
-#             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
+    def generate_pumpSpeedSnapshot(self, i):
+        """Generate pump speeds from pattern with timestamp i"""
+        parser = MyParser(self.pathToWDS)
+        parser.readField("[PATTERNS]")
+        parser.readField("[PUMPS]")
+        pumpSpeedMap = parser.pumpSpeedSnapshot(i)
+        for pump in self.wds.pumps:
+            if (pump.uid in pumpSpeedMap.keys()):
+                pump.speed = pumpSpeedMap[pump.uid]
 
+# for orig
     def calculate_pump_efficiencies(self):
         """calculate efficiencies from speeds"""
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
-            curve_id    = pump.curve.uid[:]
-            if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
+            curve_id    = pump.curve.uid[1:]
             self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
             eff_poli    = self.nomECurvePoliDict[curve_id]
             self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
+
+    # def calculate_pump_efficiencies(self):
+    #     """calculate efficiencies from speeds"""
+    #     for i, group in enumerate(self.pumpGroup):
+    #         pump        = self.wds.pumps[group[0]]
+    #         curve_id    = pump.curve.uid[:]
+    #         if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
+    #         self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
+    #         eff_poli    = self.nomECurvePoliDict[curve_id]
+    #         self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
 
     # mapping junction uid->basedemand
     def build_demand_dict(self):

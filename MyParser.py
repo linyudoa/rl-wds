@@ -9,6 +9,7 @@ class MyParser():
         self.loadFile()
         self.patterns = {}
         self.demands = {}
+        self.pumps = {}
 
     def loadFile(self):
         fileHandler = open(self.pathToInp, "r")
@@ -40,6 +41,8 @@ class MyParser():
                 self.patterns = mp
             elif (indicateStr == "[DEMANDS]"):
                 self.demands = mp
+            elif (indicateStr == "[PUMPS]"):
+                self.pumps = mp
             else:
                 print("invalid field name, should either be [PATTERNS] or [DEMANDS]")
 
@@ -48,9 +51,14 @@ class MyParser():
             field = self.patterns
         elif (fieldName == "[DEMANDS]"):
             field = self.demands
+        elif (fieldName == "[PUMPS]"):
+            field = self.pumps
         else:
             print("invalid field name, should either be [PATTERNS] or [DEMANDS]")
             return
+        for key in field.keys():
+            print("Key: ", key)
+            print(field[key][-1])
         if (len(field) == 0):
             print("Field empty")
             return
@@ -75,12 +83,29 @@ class MyParser():
                 patternIndex += 2
         print("total demand of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
+        
+    def pumpSpeedSnapshot(self, i : int):
+        """Snapshot of pump speed in timeStamp i"""
+        mp = {}
+        # print("Start to calc pump speed:==============================================================")
+        for pump in self.pumps.keys():
+            if (pump not in mp.keys()):
+                mp[pump] = 0
+            patternId = self.pumps[pump][-1]
+            if (patternId not in self.patterns.keys()):
+                print("Pattern illegal, should be in filed [PATTERNS]")
+                return 
+            patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+            mp[pump] =float(self.patterns[patternId][patternFactorPos])
+        print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        return mp
 
 # test code
-# pathToWds = "water_networks/QDMaster1031_master.inp"
-# parser = MyParser(pathToWds)
-# parser.readField("[PATTERNS]")
-# parser.readField("[DEMANDS]")
-# parser.summarizeField("[PATTERNS]")
-# for i in range(288):
-#     parser.demandSnapshot(i)
+pathToWds = "water_networks/QDMaster1031_master.inp"
+parser = MyParser(pathToWds)
+parser.readField("[PATTERNS]")
+parser.readField("[DEMANDS]")
+parser.readField("[PUMPS]")
+parser.summarizeField("[PUMPS]")
+for i in range(288):
+    parser.pumpSpeedSnapshot(i)

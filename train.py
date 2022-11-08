@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from stable_baselines.deepq.policies import FeedForwardPolicy
+from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import DQN
+from stable_baselines import PPO1
 from stable_baselines.common.schedules import PiecewiseSchedule
 from wdsEnv import wds
 
@@ -121,7 +123,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
+        env.wds.generate_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
+        obs     = env.reset(training=True) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
                     dtype = np.float32)
@@ -138,7 +141,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
 
         if tst:
             print(env.get_pump_speeds())
-            
+
         if not tst:
             df_view = history.loc[step_id].loc[scene_id].copy(deep=False)
         else:
@@ -222,6 +225,16 @@ model   = DQN(
     full_tensorboard_log    = True,
     seed                    = args.seed,
     n_cpu_tf_sess           = args.nproc)
+
+# # testing if we can use PPO directly
+# model   = PPO1(MlpPolicy,
+#     env                     = env,
+#     verbose                 = 1)
+
+# model.learn(
+#     total_timesteps = hparams['training']['totalSteps'],
+#     callback        = callback)
+
 model.learn(
     total_timesteps = hparams['training']['totalSteps'],
     log_interval    = hparams['training']['totalSteps'] // 50,
