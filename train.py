@@ -123,7 +123,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        env.wds.generate_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
+        env.wds.apply_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
         obs     = env.reset(training=True) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),

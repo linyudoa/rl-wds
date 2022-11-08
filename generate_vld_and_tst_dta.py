@@ -17,7 +17,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='anytownMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=100, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
