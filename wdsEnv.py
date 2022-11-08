@@ -37,6 +37,7 @@ class wds():
         self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'.inp')
 
         self.wds        = Network(self.pathToWDS)
+        self.generate_demandSnapshot(0) # using demand at timestamp 0 as original demand
         self.demandDict = self.build_demand_dict()
         self.pumpGroup = pump_group
         self.pump_speeds= np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)

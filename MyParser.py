@@ -54,9 +54,6 @@ class MyParser():
         if (len(field) == 0):
             print("Field empty")
             return
-        # for key in field.keys():
-        #     print("Key: ", key)
-        #     print(len(field[key]))
     
     def demandSnapshot(self, i : int):
         """Create nodal demand of timeStamp i"""
