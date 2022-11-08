@@ -136,6 +136,9 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             rewards[env.steps-1]        = reward
         cummulated_reward   += reward
 
+        if tst:
+            print(env.get_pump_speeds())
+            
         if not tst:
             df_view = history.loc[step_id].loc[scene_id].copy(deep=False)
         else:
@@ -179,17 +182,17 @@ def callback(_locals, _globals):
 
 step_id     = 0
 best_metric = 0
-vldtst_scenes   = pd.read_hdf(pathToSceneDB, 'scenes')
+total_scenes   = pd.read_hdf(pathToSceneDB, 'scenes')
 if args.tstsplit:
     assert ((args.tstsplit >= 0) and (args.tstsplit <= 100))
     print('Splitting scene db to {:}% validation and {:}% test data.\n'
         .format(100-args.tstsplit, args.tstsplit))
-    cut_idx     = int(len(vldtst_scenes) * (100 - args.tstsplit)*0.01)
-    vld_scenes  = vldtst_scenes[:cut_idx].copy(deep=False)
-    tst_scenes  = vldtst_scenes[cut_idx:].copy(deep=False)
+    cut_idx     = int(len(total_scenes) * (100 - args.tstsplit)*0.01) # befor cut_idx will be vld_scenes, after will be tst_scenes
+    vld_scenes  = total_scenes[:cut_idx].copy(deep=False)
+    tst_scenes  = total_scenes[cut_idx:].copy(deep=False)
     tst_scenes.index    = tst_scenes.index - tst_scenes.index[0]
 else:
-    vld_scenes  = vldtst_scenes.copy(deep=False)
+    vld_scenes  = total_scenes.copy(deep=False)
 
 vld_history = init_vldtst_history(vld_scenes)
 vld_history.to_hdf(pathToVldHistoryDB, key=runId, mode='w')
