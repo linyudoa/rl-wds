@@ -77,7 +77,7 @@ def generate_scenes(reset_orig_demands, n_scenes):
     else:
         for i in range(n_scenes):
             env.randomize_demands()
-            # env.generate_demandSnapshot(i) # randomize demand for every single scene
+            env.generate_demandSnapshot(i) # randomize demand for every single scene
             demand_db.loc[i]    = env.wds.junctions.basedemand # store demands in the format of df series
     return demand_db
 
