@@ -123,8 +123,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        env.wds.apply_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
-        obs     = env.reset(training=True) # if training = true, will let nm help dqn in the first place
+        env.apply_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
+        obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
                     dtype = np.float32)
@@ -170,10 +170,11 @@ def play_scenes(scenes, history, path_to_history, tst=False):
 def callback(_locals, _globals):
     global step_id, vld_history, best_metric
     step_id += 1
+    print('{}. step, training.'.format(step_id))
     if step_id % vldFreq == 0:
         if args.tstsplit != 100:
             print('{}. step, validating.'.format(step_id))
-            avg_reward  = play_scenes(vld_scenes, vld_history, pathToVldHistoryDB)
+            avg_reward  = play_scenes(vld_scenes, vld_history, pathToVldHistoryDB) # start validation
             if avg_reward > best_metric:
                 print('Cummulated reward improved {:.3f} --> {:.3f}.\nSaving...'
                     .format(best_metric, avg_reward))

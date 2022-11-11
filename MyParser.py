@@ -101,11 +101,11 @@ class MyParser():
         return mp
 
 # test code
-pathToWds = "water_networks/QDMaster1031_master.inp"
-parser = MyParser(pathToWds)
-parser.readField("[PATTERNS]")
-parser.readField("[DEMANDS]")
-parser.readField("[PUMPS]")
-parser.summarizeField("[PUMPS]")
-for i in range(288):
-    parser.pumpSpeedSnapshot(i)
+# pathToWds = "water_networks/QDMaster1031_master.inp"
+# parser = MyParser(pathToWds)
+# parser.readField("[PATTERNS]")
+# parser.readField("[DEMANDS]")
+# parser.readField("[PUMPS]")
+# parser.summarizeField("[PUMPS]")
+# for i in range(288):
+#     parser.pumpSpeedSnapshot(i)

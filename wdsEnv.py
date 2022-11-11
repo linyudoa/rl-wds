@@ -242,6 +242,7 @@ class wds():
         return observation, reward, self.done, {}
 
     def reset(self, training=True):
+        """Reset to Original pump speeds and demand"""
         if self.resetOrigPumpSpeeds:
             initial_speed   = 1.
         else:

@@ -5,7 +5,7 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 介绍结果，放图：训练过程、测试结果得分 √
 介绍未来的实验计划: 使用GNN+RL/实时数据 + NM分别训练历史管网，探索泛化效果 
 
-搞清楚其他pump如何工作，在模型中是否能作为当时的常量 
+搞清楚其他pump如何工作，在模型中是否能作为当时的常量: Can be set according to history state  √
 写一个parser处理.inp的pattern等数据，将basedemand + pattern数据处理成数据集: √
 	直接打开并且逐行读取.inp file
 	读取每个junction 的pattern名，存起来
@@ -13,3 +13,5 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 	generate_demand_shot(i): 生成某个shot的demand series，通过basedemand*pattern factor
 完善print()方法，能够以给定的obs(RL)和demand(NM)打印出预测结果 
 监控模块，完善泵速打印及能耗可视化api
+
+can add some code to print original pump op and predicted op
