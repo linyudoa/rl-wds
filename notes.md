@@ -7,11 +7,11 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 
 搞清楚其他pump如何工作，在模型中是否能作为当时的常量: Can be set according to history state  √
 写一个parser处理.inp的pattern等数据，将basedemand + pattern数据处理成数据集: √
-	直接打开并且逐行读取.inp file
-	读取每个junction 的pattern名，存起来
-	读取每个pattern, 将1440的pattern存成288的
-	generate_demand_shot(i): 生成某个shot的demand series，通过basedemand*pattern factor
-完善print()方法，能够以给定的obs(RL)和demand(NM)打印出预测结果 
-监控模块，完善泵速打印及能耗可视化api
 
-can add some code to print original pump op and predicted op
+validate the model by:
+
+1. Train and validate on real history data
+2. Train on random data and validate on history data
+3. print original pump op and predicted op
+4. Calc history reward and compare it to validate reward
+5. Compare head, energy efficiency of history and validate data
