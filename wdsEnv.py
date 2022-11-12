@@ -242,14 +242,18 @@ class wds():
         return observation, reward, self.done, {}
 
     def reset(self, training=True):
-        """Reset to Original pump speeds and demand"""
+        """Reset to Original pump speeds and demand, original means historic"""
         if self.resetOrigPumpSpeeds:
-            initial_speed   = 1.
+            # initial_speed   = 1.
+            1
         else:
-            initial_speed   = np.random.choice(self.validSpeeds)
+            for pump_grp in self.pumpGroup:
+                initial_speed   = np.random.choice(self.validSpeeds)
+                for pump in pump_grp:
+                    self.wds.pumps[pump].speed  = initial_speed
         if training:
             if self.resetOrigDemands:
-                self.restore_original_demands()
+                1
             else:
                 self.randomize_demands()
             self.optimize_state()
@@ -258,10 +262,6 @@ class wds():
 #            if self.optimized_value == 0:
 #                self.optimized_value    = .01
 ## One-shot ends
-        for pump_grp in self.pumpGroup:
-            initial_speed   = np.random.choice(self.validSpeeds)
-            for pump in pump_grp:
-                self.wds.pumps[pump].speed  = initial_speed
         self.wds.solve()
         observation = self.get_observation()
         self.done   = False
@@ -480,7 +480,8 @@ class wds():
         return result
 
     def calc_reward(self):
-        pump_ok = (self.pumpEffs < 1).all() and (self.pumpEffs > 0).all()
+        # pump_ok = (self.pumpEffs < 1).all() and (self.pumpEffs > 0).all()
+        pump_ok = (self.pumpEffs > 0).all()
         if pump_ok:
             heads   = np.array([head for head in self.wds.junctions.head])
             invalid_heads_count = (np.count_nonzero(heads < self.headLimitLo) +

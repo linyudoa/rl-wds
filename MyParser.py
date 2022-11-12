@@ -81,7 +81,7 @@ class MyParser():
                 mp[junc] += float(self.demands[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
                 demandIndex += 2
                 patternIndex += 2
-        print("total demand of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        # print("total demand of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
         
     def pumpSpeedSnapshot(self, i : int):
@@ -97,7 +97,7 @@ class MyParser():
                 return 
             patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
             mp[pump] =float(self.patterns[patternId][patternFactorPos])
-        print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
+        # print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
 
 # test code

@@ -17,7 +17,7 @@ parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster1031', help="Name of the YAML file.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
-parser.add_argument('--tstsplit', default=20, type=int, help="Ratio of scenes moved from vld to tst scene in percentage.")
+parser.add_argument('--tstsplit', default=50, type=int, help="Ratio of scenes moved from vld to tst scene in percentage.")
 args    = parser.parse_args()
 
 pathToRoot      = os.path.dirname(os.path.realpath(__file__))
@@ -138,7 +138,6 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             pump_speeds[env.steps-1, :] = env.get_pump_speeds()
             rewards[env.steps-1]        = reward
         cummulated_reward   += reward
-
         if tst:
             print(env.get_pump_speeds())
 

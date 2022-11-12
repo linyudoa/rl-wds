@@ -3,10 +3,10 @@ env:
     speedIncrement  : .05
     episodeLen      : 40
     pumpGroups      : [['XJ-P2', 'XJ-P4']]
-    totalDemandLo   : 2.5
-    totalDemandHi   : 5
-    resetOrigDemands    : False
-    resetOrigPumpSpeeds : False # if True, will set original optimize pump speed to 1., otherwise a random valid speed will be chosen
+    totalDemandLo   : 0.7
+    totalDemandHi   : 1.5
+    resetOrigDemands    : True
+    resetOrigPumpSpeeds : True # if True, will set original optimize pump speed to 1., otherwise a random valid speed will be chosen
 model:
     layers  : [48, 32, 12]
     restore : None

@@ -11,7 +11,8 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 validate the model by:
 
 1. Train and validate on real history data
-2. Train on random data and validate on history data
-3. print original pump op and predicted op
-4. Calc history reward and compare it to validate reward
-5. Compare head, energy efficiency of history and validate data
+2. Use water head dict
+3. Train on random data and validate on history data
+4. print original pump op and predicted op
+5. Calc history reward and compare it to validate reward
+6. Compare head, energy efficiency of history and validate data
