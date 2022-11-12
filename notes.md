@@ -8,6 +8,33 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 搞清楚其他pump如何工作，在模型中是否能作为当时的常量: Can be set according to history state  √
 写一个parser处理.inp的pattern等数据，将basedemand + pattern数据处理成数据集: √
 
+HEAD DICT:
+HUAYI: 华益
+J40379: 青东
+J40543: 华新
+JIAHUA: 嘉华
+JIXI: 纪西
+J49895: 纪王
+J59970: 农科
+J110064: 火星
+J107956: 新凤
+J79998: 白杨
+HUAYU: 华宇
+J111568: 诸新
+J13356: 金联
+J82123 : 平野 
+XULE: 徐乐
+J95051: 迮奄
+JINSHUI: 金水
+J56841: 广虹
+PANZHONG: 蟠中
+J77098: 国展
+HUAQING: 华青
+ZHUGUANG: 诸光
+J54945: 邮政
+J101196: 沪外
+诸蟠 is not avalable
+
 validate the model by:
 
 1. Train and validate on real history data

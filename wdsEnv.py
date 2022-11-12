@@ -45,7 +45,14 @@ class wds():
         self.tmpfile_name = ""
         self.pathToTmpWds = ""
 
-        self.headMaskKeys = {"J119449_B", "J119448_B", "J119447_B", "J119356_B", "J119333_B", "J118863_B"} # should fill observable junctionIDs here, to filter needed junctions
+        self.headMaskKeys = {"HUAYI", "J40379", "J40543",
+                            "JIAHUA", "JIXI", "J49895",
+                            "J59970", "J110064", "J107956",
+                            "J79998", "HUAYU", "J111568",
+                            "J13356", "J82123", "XULE",
+                            "J95051", "JINSHUI", "J56841",
+                            "PANZHONG", "J77098", "HUAQING",
+                            "ZHUGUANG", "J54945", "J101196"} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
 
         if (len(self.headMaskKeys) != 0):
@@ -515,6 +522,7 @@ class wds():
         return self.get_state_value_to_opti(np.asarray(pump_speeds)),
 
     def update_pump_speeds(self):
+        """Only update pump group speeds"""
         for i, pump_group in enumerate(self.pumpGroup):
             self.pump_speeds[i] = self.wds.pumps[pump_group[0]].speed
         return self.pump_speeds
