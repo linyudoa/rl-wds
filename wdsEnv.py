@@ -53,6 +53,7 @@ class wds():
                             "J95051", "JINSHUI", "J56841",
                             "PANZHONG", "J77098", "HUAQING",
                             "ZHUGUANG", "J54945", "J101196"} # should fill observable junctionIDs here, to filter needed junctions
+        # self.headMaskKeys = {} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
 
         if (len(self.headMaskKeys) != 0):
@@ -97,8 +98,8 @@ class wds():
         # Reward control
         self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
-        self.headLimitLo    = 15
-        self.headLimitHi    = 120
+        self.headLimitLo    = 11
+        self.headLimitHi    = 60
         self.maxHead        = np.max(peak_heads)
         self.rewScale       = [8,4,2] # mut factors of head demand, tank, energy eff
         # 4,4,2   3.5,3.5,3     3,3,4     2.5,2.5,5
@@ -250,25 +251,20 @@ class wds():
 
     def reset(self, training=True):
         """Reset to Original pump speeds and demand, original means historic"""
-        if self.resetOrigPumpSpeeds:
-            # initial_speed   = 1.
-            1
-        else:
-            for pump_grp in self.pumpGroup:
-                initial_speed   = np.random.choice(self.validSpeeds)
-                for pump in pump_grp:
-                    self.wds.pumps[pump].speed  = initial_speed
+        # if self.resetOrigPumpSpeeds:
+        #     1
+        # else:
+        #     for pump_grp in self.pumpGroup:
+        #         initial_speed   = np.random.choice(self.validSpeeds)
+        #         for pump in pump_grp:
+        #             self.wds.pumps[pump].speed  = initial_speed
         if training:
             if self.resetOrigDemands:
                 1
             else:
-                self.randomize_demands()
+                i = random.randint(0, 287)
+                # self.apply_scene(i)
             self.optimize_state()
-## One-shot begins
-#            self.optimize_state_with_one_shot()
-#            if self.optimized_value == 0:
-#                self.optimized_value    = .01
-## One-shot ends
         self.wds.solve()
         observation = self.get_observation()
         self.done   = False
@@ -305,33 +301,33 @@ class wds():
                 polinomials[curve]  = np.polyfit(
                     pts_dict[curve][:,0], pts_dict[curve][:,1], degree)
         return polinomials
-# # read the curves to dict, original models
-#     def get_performance_curve_points(self):
-#         """Reader for H(Q) and P(Q) curves."""
-#         head_curves = dict()
-#         eff_curves  = dict()
+# read the curves to dict, original models
+    # def get_performance_curve_points(self):
+    #     """Reader for H(Q) and P(Q) curves."""
+    #     head_curves = dict()
+    #     eff_curves  = dict()
 
-#         # Loading data to dictionary
-#         for curve in self.wds.curves:
-#             if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
-#                 head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
-#                 for i, op_pnt in enumerate(curve.values):
-#                     head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
-#                     head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
-#             elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
-#                 eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
-#                 for i, op_pnt in enumerate(curve.values):
-#                     eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
-#                     eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
-#             else:
-#                 print("Error, curve is either head nor efficiency") 
-#         # Checking consistency
-#         # Mistake here, should compare one by one
-#         for head_key in head_curves.keys():
-#             if all(head_key != eff_key for eff_key in eff_curves.keys()):
-#                 print('\nInconsistency in H(Q) and P(Q) curves.\n')
-#                 raise IndexError
-#         return head_curves, eff_curves
+    #     # Loading data to dictionary
+    #     for curve in self.wds.curves:
+    #         if curve.uid[0] == 'H': # starting with 'H' means this is an H(Q) curve
+    #             head_curves[curve.uid[1:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
+    #             for i, op_pnt in enumerate(curve.values):
+    #                 head_curves[curve.uid[1:]][i, 0]    = op_pnt[0]
+    #                 head_curves[curve.uid[1:]][i, 1]    = op_pnt[1]
+    #         elif curve.uid[0] == 'E': # starting with 'E' means this is an E(Q) curve
+    #             eff_curves[curve.uid[1:]]   = np.empty([len(curve.values), 2], dtype=np.float32)
+    #             for i, op_pnt in enumerate(curve.values):
+    #                 eff_curves[curve.uid[1:]][i, 0] = op_pnt[0]
+    #                 eff_curves[curve.uid[1:]][i, 1] = op_pnt[1]
+    #         else:
+    #             print("Error, curve is either head nor efficiency") 
+    #     # Checking consistency
+    #     # Mistake here, should compare one by one
+    #     for head_key in head_curves.keys():
+    #         if all(head_key != eff_key for eff_key in eff_curves.keys()):
+    #             print('\nInconsistency in H(Q) and P(Q) curves.\n')
+    #             raise IndexError
+    #     return head_curves, eff_curves
     
     def get_performance_curve_points(self):
         """Reader for H(Q) and P(Q) curves. New models"""
@@ -340,12 +336,12 @@ class wds():
 
         # Loading data to dictionary
         for curve in self.wds.curves:
-            if curve.uid[-1] != 'E': # starting with 'H' means this is an H(Q) curve
+            if curve.uid[-1] != 'E': # not end with 'E' means this is an H(Q) curve
                 head_curves[curve.uid[:]]  = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
                     head_curves[curve.uid[:]][i, 0]    = op_pnt[0]
                     head_curves[curve.uid[:]][i, 1]    = op_pnt[1]
-            elif curve.uid[-1] == 'E': # starting with 'E' means this is an E(Q) curve
+            elif curve.uid[-1] == 'E': # end with 'E' means this is an E(Q) curve
                 eff_curves[curve.uid[:-1]]   = np.empty([len(curve.values), 2], dtype=np.float32)
                 for i, op_pnt in enumerate(curve.values):
                     eff_curves[curve.uid[:-1]][i, 0] = op_pnt[0]
@@ -397,7 +393,11 @@ class wds():
                 sum_of_random_demands   += junction.basedemand
         for junction in self.wds.junctions:
             junction.basedemand *= target_sum_of_demands / sum_of_random_demands
-        
+
+    def apply_scene(self, i):
+        self.apply_demandSnapshot(i)
+        self.apply_pumpSpeedSnapshot(i)
+
     def apply_demandSnapshot(self, i):
         """Generate demand from pattern with step index i"""
         parser = MyParser(self.pathToWDS)
@@ -500,8 +500,11 @@ class wds():
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
         else:
             result = 0
+        print("valid_heads_score", valid_heads_score)
+        print("tank_usage_score", tank_usage_score)
+        print("energy_eff_score", energy_eff_score)
         return result
-        
+
 # restrict pump speed to limits and call .get_state_value()
     def get_state_value_to_opti(self, pump_speeds):
         np.clip(a   = pump_speeds,
@@ -513,6 +516,7 @@ class wds():
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
         self.wds.solve()
         return self.get_state_value()
+        
     def reward_to_scipy(self, pump_speeds):
         """Only minimization allowed."""
         return -self.get_state_value_to_opti(pump_speeds)

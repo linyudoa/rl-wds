@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import argparse
-import sys
 import os
 import yaml
 import multiprocessing
@@ -65,19 +64,15 @@ env = wds(
         seed            = args.seed
 )
 
-def generate_scenes(reset_orig_demands, n_scenes):
+def generate_scenes(n_scenes):
+    """Generate validation scenes"""
     junction_ids    = list(env.wds.junctions.uid)
     demand_db = pd.DataFrame(
         np.empty(shape = (n_scenes, len(junction_ids))),
         columns = junction_ids)
-    if reset_orig_demands: # retore to original demand series
-        for i in range(n_scenes):
-            env.restore_original_demands(i)
-            demand_db.loc[i]    = env.wds.junctions.basedemand
-    else:
-        for i in range(n_scenes):
-            env.randomize_demands()
-            demand_db.loc[i]    = env.wds.junctions.basedemand # store demands in the format of df series
+    for i in range(n_scenes):
+        env.restore_original_demands(i)
+        demand_db.loc[i]    = env.wds.junctions.basedemand
     return demand_db
 
 def reward_to_scipy(pump_speeds):
@@ -96,19 +91,18 @@ class nelder_mead_method():
     def maximize(self, scene_id):
         if seed:
             random.seed(args.seed)
-            init_guess  = []
-            for i in range(env.dimensions):
-                init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
         else:
             random.seed()
-            init_guess  = []
-            for i in range(env.dimensions):
-                init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
-    
+            
+        init_guess  = []
+        for i in range(env.dimensions):
+            init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
+
         env.wds.junctions.basedemand    = scene_df.loc[scene_id]
         options     = { 'maxfev': 1000,
                         'xatol' : .005,
                         'fatol' : .01}
+        env.apply_pumpSpeedSnapshot(scene_id)
         result  = neldermead(
             reward_to_scipy,
             init_guess,
@@ -377,7 +371,7 @@ def optimize_scenes(scene_df, method=None):
     result_df.rename_axis(None, inplace=True)
     return result_df
 
-scene_df    = generate_scenes(reset_orig_demands, n_scenes)
+scene_df    = generate_scenes(n_scenes)
 scene_df.to_hdf(pathToDB, key='scenes', mode='w')
 
 df_header   = ['index', 'reward', 'evals']

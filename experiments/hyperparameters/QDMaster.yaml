@@ -1,0 +1,21 @@
+env:
+    waterNet        : QDMaster
+    speedIncrement  : .05
+    episodeLen      : 48
+    pumpGroups      : [['XJ-P2', 'XJ-P4']]
+    totalDemandLo   : 0.7
+    totalDemandHi   : 1.5
+    resetOrigDemands    : False
+    resetOrigPumpSpeeds : False # if True, will set original optimize pump speed to 1., otherwise a random valid speed will be chosen
+model:
+    layers  : [128, 64, 24]
+    restore : None
+evaluation:
+    dbName      : qingdong_rnd
+training:
+    initLrnRate     : .0001
+    totalSteps      : 5000
+    gamma           : .99
+    batchSize       : 8
+    learningStarts  : 1000
+    bufferSize      : 25000

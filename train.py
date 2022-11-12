@@ -17,7 +17,7 @@ parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster1031', help="Name of the YAML file.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
-parser.add_argument('--tstsplit', default=50, type=int, help="Ratio of scenes moved from vld to tst scene in percentage.")
+parser.add_argument('--tstsplit', default=20, type=int, help="Ratio of scenes moved from vld to tst scene in percentage.")
 args    = parser.parse_args()
 
 pathToRoot      = os.path.dirname(os.path.realpath(__file__))
@@ -123,8 +123,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        env.apply_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
-        obs     = env.reset(training=True) # if training = true, will let nm help dqn in the first place
+        env.apply_pumpSpeedSnapshot(scene_id)
+        obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
                     dtype = np.float32)
@@ -141,7 +141,6 @@ def play_scenes(scenes, history, path_to_history, tst=False):
         cummulated_reward   += reward
         if tst:
             print(env.get_pump_speeds())
-
         if not tst:
             df_view = history.loc[step_id].loc[scene_id].copy(deep=False)
         else:
@@ -163,7 +162,6 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             .format(best_metric, avg_reward))
         best_metric = avg_reward
         model.save(pathToBestModel)
-    obs = env.reset(training=True)
     history.to_hdf(path_to_history, key=runId, mode='a')
     return avg_reward
 
@@ -180,7 +178,7 @@ def callback(_locals, _globals):
                     .format(best_metric, avg_reward))
                 best_metric = avg_reward
                 model.save(pathToBestModel)
-            obs = env.reset(training=True)
+            # obs = env.reset(training=True)  # deleted because play_scenes contains reset
 #        vld_history.to_hdf(pathToVldHistoryDB, key=runId, mode='a')
     return True
 
