@@ -45,7 +45,7 @@ class wds():
         self.tmpfile_name = ""
         self.pathToTmpWds = ""
 
-        self.headMaskKeys = {} # should fill observable junctionIDs here, to filter needed junctions
+        self.headMaskKeys = {"J119449_B", "J119448_B", "J119447_B", "J119356_B", "J119333_B", "J118863_B"} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
 
         if (len(self.headMaskKeys) != 0):
@@ -376,9 +376,8 @@ class wds():
         speeds  = self.pump_speeds / self.speedLimitHi
         return np.concatenate([heads, speeds])
 
-    def restore_original_demands(self):
-        for junction in self.wds.junctions:
-            junction.basedemand = self.demandDict[junction.uid]
+    def restore_original_demands(self, i):
+        self.apply_demandSnapshot(i)
 
     def build_truncnorm_randomizer(self, lo, hi, mu, sigma):
         randomizer = stats.truncnorm(
@@ -483,7 +482,7 @@ class wds():
         # pump_ok = (self.pumpEffs < 1).all() and (self.pumpEffs > 0).all()
         pump_ok = (self.pumpEffs > 0).all()
         if pump_ok:
-            heads   = np.array([head for head in self.wds.junctions.head])
+            heads   = self.get_junction_heads()
             invalid_heads_count = (np.count_nonzero(heads < self.headLimitLo) +
                 np.count_nonzero(heads > self.headLimitHi))
             valid_heads_ratio   = 1 - (invalid_heads_count / len(heads)) # calc valid head ratio

@@ -16,7 +16,7 @@ from deap import tools
 from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
-parser.add_argument('--params', default='anytownMaster', type=str, help="Name of the YAML file.")
+parser.add_argument('--params', default='QDMaster1031', type=str, help="Name of the YAML file.")
 parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
@@ -72,12 +72,11 @@ def generate_scenes(reset_orig_demands, n_scenes):
         columns = junction_ids)
     if reset_orig_demands: # retore to original demand series
         for i in range(n_scenes):
-            env.restore_original_demands()
+            env.restore_original_demands(i)
             demand_db.loc[i]    = env.wds.junctions.basedemand
     else:
         for i in range(n_scenes):
             env.randomize_demands()
-            env.generate_demandSnapshot(i) # randomize demand for every single scene
             demand_db.loc[i]    = env.wds.junctions.basedemand # store demands in the format of df series
     return demand_db
 

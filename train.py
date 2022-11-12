@@ -124,7 +124,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     for scene_id in range(len(scenes)):
         env.wds.junctions.basedemand    = scenes.loc[scene_id]
         env.apply_pumpSpeedSnapshot(scene_id) # use current snapshot of other pumps
-        obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
+        obs     = env.reset(training=True) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
                     dtype = np.float32)
@@ -137,6 +137,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             obs, reward, _, _   = env.step(act, training=False)
             pump_speeds[env.steps-1, :] = env.get_pump_speeds()
             rewards[env.steps-1]        = reward
+        print("validating ", scene_id + 1, " in ", len(scenes), " scenes, reward = ", reward)
         cummulated_reward   += reward
         if tst:
             print(env.get_pump_speeds())
