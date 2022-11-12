@@ -345,20 +345,9 @@ class wds():
                     eff_curves[curve.uid[:-1]][i, 1] = op_pnt[1]
             else:
                 print("Error, curve is either head nor efficiency")
-        # Checking consistency
-        # Mistake here, should compare one by one
-        # for head_key in head_curves.keys():
-        #     if all(head_key != eff_key for eff_key in eff_curves.keys()):
-        #         print('\nInconsistency in H(Q) and P(Q) curves.\n')
-        #         raise IndexError
         return head_curves, eff_curves
     
     def get_junction_heads(self):
-        # junc_heads = np.empty(
-        #                 shape   = (len(self.wds.junctions),),
-        #                 dtype   = np.float32)
-        # for junc_id, junction in enumerate(self.wds.junctions):
-        #     junc_heads[junc_id] = junction.head
         return self._get_junction_heads()
 
     def _get_junction_heads(self):
