@@ -37,6 +37,8 @@ J101196: 沪外
 
 validate the model by:
 
+Need to figure out how to use wdm model on epanet
+
 1. Train and validate on real history data
 2. Use water head dict
 3. Train on random data and validate on history data

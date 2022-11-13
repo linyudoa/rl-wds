@@ -12,7 +12,7 @@ class MyParser():
         self.pumps = {}
 
     def loadFile(self):
-        fileHandler = open(self.pathToInp, "r")
+        fileHandler = open(self.pathToInp, "r", encoding='latin1')
         self.lines = fileHandler.readlines()
     
     def readField(self, indicateStr):
@@ -20,8 +20,13 @@ class MyParser():
         mp = {}
         count = 0
         for line in self.lines:
+            line = line.strip().rstrip(';')
+            if (line.rfind(';') > -1): 
+                pos = line.rfind(';')
+                line = line[:pos]
             lineItems = line.strip().rstrip(';').split()
-            if (vldFlag == True and len(lineItems) == 0):
+            if (len(lineItems) == 0): continue
+            if (vldFlag == True and (len(lineItems) == 0 or lineItems[0][0] == '[')):
                 vldFlag = False
                 break
             elif (len(lineItems) == 0):
@@ -37,14 +42,14 @@ class MyParser():
                         count += 1
             if (lineItems[0] == indicateStr):
                 vldFlag = True
-            if (indicateStr == "[PATTERNS]"):
-                self.patterns = mp
-            elif (indicateStr == "[DEMANDS]"):
-                self.demands = mp
-            elif (indicateStr == "[PUMPS]"):
-                self.pumps = mp
-            else:
-                print("invalid field name, should either be [PATTERNS] or [DEMANDS]")
+        if (indicateStr == "[PATTERNS]"):
+            self.patterns = mp
+        elif (indicateStr == "[DEMANDS]"):
+            self.demands = mp
+        elif (indicateStr == "[PUMPS]"):
+            self.pumps = mp
+        else:
+            print("invalid field name, should either be [PATTERNS] or [DEMANDS]")
 
     def summarizeField(self, fieldName):
         if (fieldName == "[PATTERNS]"):
