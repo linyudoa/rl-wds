@@ -82,16 +82,23 @@ class wds():
                 -self.nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
             peak_heads.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
         self.peakTotHeads = np.prod(peak_heads)
+
         peak_effs  = []
-        for key in self.nomHCurvePoliDict.keys():
-            max_q       = np.max(nomHCurvePtsDict[key][:,0])
-            q_list      = np.linspace(0, max_q, 10)
-            head_poli   = self.nomHCurvePoliDict[key]
-            eff_poli    = self.nomECurvePoliDict[key]
-            opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
-            peak_effs.append(eff_poli(opti_result.x[0]))
+        for key in self.nomECurvePoliDict.keys():
+            max_q       = np.max(nomECurvePtsDict[key][:,0])
+            opti_result = minimize(
+                -self.nomECurvePoliDict[key], x0=1, bounds=[(0, max_q)])
+            peak_effs.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
         self.peakTotEff = np.prod(peak_effs)
 
+        # for i, group in enumerate(self.pumpGroup):
+        #     pump        = self.wds.pumps[group[0]]
+        #     curve_id    = pump.curve.uid[:]
+        #     if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
+        #     self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
+        #     eff_poli    = self.nomECurvePoliDict[curve_id]
+        #     self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
+        
         # Reward control
         self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
