@@ -36,14 +36,14 @@ J101196: 沪外
 诸蟠 is not avalable
 
 validate the model by:
-
-Problems:
-    Need to figure out how to use wdm model on epanet
-    Figure out what does tank/reservoir pattern mean
-
 1. Train and validate on real history data
 2. Use water head dict
 3. Train on random data and validate on history data
 4. print original pump op and predicted op
 5. Calc history reward and compare it to validate reward
 6. Compare head, energy efficiency of history and validate data
+
+Problems:
+    Need to figure out how to use wdm model on epanet
+    Figure out what does tank/reservoir pattern mean
+

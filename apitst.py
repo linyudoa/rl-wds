@@ -9,6 +9,7 @@ from deap import base
 from deap import creator
 from functools import reduce
 from deap import tools
+import random
 from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
@@ -47,8 +48,9 @@ env = wds(
         total_demand_hi = hparams['env']['totalDemandHi'],
         seed            = args.seed
 )
+
 for scene_id in range(n_scenes):
-    # env.apply_scene(scene_id)
-    print("total demand of scene ", scene_id + 1, "is: ", reduce(lambda x, y : x + y, env.wds.junctions.basedemand))
+    env.apply_scene(scene_id)
     env.wds.solve()
-    # print(env.get_junction_heads())
+    print(env.get_junction_heads())
+    print(env.get_state_value())

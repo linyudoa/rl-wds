@@ -1,11 +1,9 @@
 # -* coding: utf-8 -*-
 import os
-import shutil
 import numpy as np
 import scipy.stats as stats
 from scipy.optimize import minimize
 import gym.spaces
-import uuid
 import random
 from MyParser import MyParser
 from functools import reduce
@@ -360,7 +358,7 @@ class wds():
                         dtype   = np.float32)
         for junc_id in range(len(self.headDict)):
             junc_heads[junc_id] = self.wds.junctions[str(self.headDict[junc_id])].head
-        return junc_heads
+        return junc_heads + 30
 
     def get_observation(self):
         heads   = (2*self.get_junction_heads() / self.maxHead) - 1
@@ -400,13 +398,21 @@ class wds():
 
     def apply_demandSnapshot(self, i):
         """Generate demand from pattern with step index i"""
-        parser = MyParser(self.pathToWDS)
-        parser.readField("[PATTERNS]")
-        parser.readField("[DEMANDS]")
-        demandMap = parser.demandSnapshot(i)
+        # parser = MyParser(self.pathToWDS)
+        # parser.readField("[PATTERNS]")
+        # parser.readField("[JUNCTIONS]")
+        # parser.readField("[DEMANDS]")
+        # demandMap = parser.demandSnapshot(i)
+        # for junction in self.wds.junctions:
+        #     if (junction.uid in demandMap.keys()):
+        #         junction.basedemand = demandMap[junction.uid]
+        self.randomize_demand(3800, 8000)
+
+    def randomize_demand(self, lo, hi):
+        totDemand = random.randint(lo, hi)
+        num = len(self.wds.junctions)
         for junction in self.wds.junctions:
-            if (junction.uid in demandMap.keys()):
-                junction.basedemand = demandMap[junction.uid]
+            junction.basedemand = totDemand / num
 
     def apply_pumpSpeedSnapshot(self, i):
         """Generate pump speeds from pattern with timestamp i"""
@@ -500,9 +506,6 @@ class wds():
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
         else:
             result = 0
-        print("valid_heads_score", valid_heads_score)
-        print("tank_usage_score", tank_usage_score)
-        print("energy_eff_score", energy_eff_score)
         return result
 
 # restrict pump speed to limits and call .get_state_value()

@@ -8,6 +8,7 @@ class MyParser():
         self.lines = []
         self.loadFile()
         self.patterns = {}
+        self.junctions = {}
         self.demands = {}
         self.pumps = {}
 
@@ -24,7 +25,7 @@ class MyParser():
             if (line.rfind(';') > -1): 
                 pos = line.rfind(';')
                 line = line[:pos]
-            lineItems = line.strip().rstrip(';').split()
+            lineItems = line.strip().split()
             if (len(lineItems) == 0): continue
             if (vldFlag == True and (len(lineItems) == 0 or lineItems[0][0] == '[')):
                 vldFlag = False
@@ -47,7 +48,9 @@ class MyParser():
         elif (indicateStr == "[DEMANDS]"):
             self.demands = mp
         elif (indicateStr == "[PUMPS]"):
-            self.pumps = mp
+            self.pumps = mp        
+        elif (indicateStr == "[JUNCTIONS]"):
+            self.junctions = mp
         else:
             print("invalid field name, should either be [PATTERNS] or [DEMANDS]")
 
@@ -69,14 +72,17 @@ class MyParser():
             return
     
     def demandSnapshot(self, i : int):
-        """Create nodal demand of timeStamp i"""
         mp = {}
-        # print("Start to calc demands:==============================================================")
+        self.fill_demands_from_demands(i, mp)
+        self.fill_demands_from_junctions(i, mp)
+        return mp
+
+    def fill_demands_from_demands(self, i, mp : dict):
+        """Create nodal demand of timeStamp i"""
         for junc in self.demands.keys():
             demandIndex = 0
             patternIndex = 1
-            if (junc not in mp.keys()):
-                mp[junc] = 0
+            mp[junc] = 0
             while demandIndex < len(self.demands[junc]):
                 patternId = self.demands[junc][patternIndex]
                 patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
@@ -86,9 +92,24 @@ class MyParser():
                 mp[junc] += float(self.demands[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
                 demandIndex += 2
                 patternIndex += 2
-        print("total demand of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
-        return mp
-        
+    
+    def fill_demands_from_junctions(self, i : int, mp : dict):
+        """Create nodal demand of timeStamp i, from [juntions] field"""
+        for junc in self.junctions.keys():
+            demandIndex = 1
+            patternIndex = 2
+            if (len(self.junctions[junc]) < 3): continue
+            if (junc not in mp.keys()):
+                mp[junc] = 0
+            else:
+                continue
+            patternId = self.junctions[junc][patternIndex]
+            patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+            if (patternId not in self.patterns.keys()):
+                print("Pattern illegal, should be in filed [PATTERNS]")
+                return 
+            mp[junc] += float(self.junctions[junc][demandIndex]) * float(self.patterns[patternId][patternFactorPos])
+
     def pumpSpeedSnapshot(self, i : int):
         """Snapshot of pump speed in timeStamp i"""
         mp = {}
