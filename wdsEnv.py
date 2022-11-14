@@ -38,7 +38,7 @@ class wds():
         self.apply_demandSnapshot(0) # using demand at timestamp 0 as original demand
         self.demandDict = self.build_demand_dict()
         self.pumpGroup = pump_group
-        self.pump_speeds= np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
+        self.pump_speeds = np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
         self.pumpEffs   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
         self.tmpfile_name = ""
         self.pathToTmpWds = ""
@@ -73,36 +73,38 @@ class wds():
                             [demand for demand in self.wds.junctions.basedemand])
         self.demandRandomizer   = self.build_truncnorm_randomizer(
                                     lo=.7, hi=1.3, mu=1.0, sigma=1.0) # hyperparams for randomizing demand
-
-        # Theoretical bounds of {head, efficiency}
-        peak_heads   = []
-        for key in self.nomHCurvePoliDict.keys():
+        
+        # Theoretical bounds of {head, efficiency} of pumps in pumpgroup
+        peak_heads   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
+        for i, group in enumerate(self.pumpGroup):
+            pump        = self.wds.pumps[group[0]]
+            curve_id    = pump.curve.uid[:]
+            if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
+            key = curve_id
             max_q       = np.max(nomHCurvePtsDict[key][:,0])
             opti_result = minimize(
                 -self.nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
-            peak_heads.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
+            # peak_heads.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
+            peak_heads[i]   = self.nomHCurvePoliDict[key](opti_result.x[0])
         self.peakTotHeads = np.prod(peak_heads)
 
-        peak_effs  = []
-        for key in self.nomECurvePoliDict.keys():
+        # Theoretical bounds of {head, efficiency} of pumps in pumpgroup
+        for i, group in enumerate(self.pumpGroup):
+            pump        = self.wds.pumps[group[0]]
+            curve_id    = pump.curve.uid[:]
+            if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
+            peak_effs  = []
+            key = curve_id
             max_q       = np.max(nomECurvePtsDict[key][:,0])
             opti_result = minimize(
                 -self.nomECurvePoliDict[key], x0=1, bounds=[(0, max_q)])
             peak_effs.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
         self.peakTotEff = np.prod(peak_effs)
 
-        # for i, group in enumerate(self.pumpGroup):
-        #     pump        = self.wds.pumps[group[0]]
-        #     curve_id    = pump.curve.uid[:]
-        #     if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
-        #     self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
-        #     eff_poli    = self.nomECurvePoliDict[curve_id]
-        #     self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
-        
         # Reward control
         self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
-        self.headLimitLo    = 11
+        self.headLimitLo    = 16
         self.headLimitHi    = 60
         self.maxHead        = np.max(peak_heads)
         self.rewScale       = [8,4,2] # mut factors of head demand, tank, energy eff
@@ -503,9 +505,10 @@ class wds():
 
             total_efficiency    = np.prod(self.pumpEffs)
             total_pumpHeads = np.prod(self.pump_heads)
-
+            
             valid_heads_score = valid_heads_ratio
             tank_usage_score = demand_to_total
+            energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads  / total_pumpHeads
             energy_eff_score = total_efficiency / self.peakTotEff
             result  = ( self.rewScale[0] * valid_heads_score + 
                         self.rewScale[1] * tank_usage_score + 
