@@ -442,7 +442,7 @@ class wds():
     def build_demand_dict(self):
         demand_dict = dict()
         for junction in self.wds.junctions:
-            demand_dict[junction.uid]   = junction.basedemand
+            demand_dict[junction.uid] = junction.basedemand
         return demand_dict
 
     def get_state_value_separated(self):

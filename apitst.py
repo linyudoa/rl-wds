@@ -1,17 +1,13 @@
 from epynet import Network
 import argparse
-import sys
 import os
 import yaml
-import multiprocessing
-import array
-import operator
-import random
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize as neldermead
 from deap import base
 from deap import creator
+from functools import reduce
 from deap import tools
 from wdsEnv import wds
 
@@ -51,7 +47,8 @@ env = wds(
         total_demand_hi = hparams['env']['totalDemandHi'],
         seed            = args.seed
 )
-
-env.wds.solve()
-print(env.get_junction_heads())
-print(env.get_state_value())
+for scene_id in range(n_scenes):
+    # env.apply_scene(scene_id)
+    print("total demand of scene ", scene_id + 1, "is: ", reduce(lambda x, y : x + y, env.wds.junctions.basedemand))
+    env.wds.solve()
+    # print(env.get_junction_heads())
