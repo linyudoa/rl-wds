@@ -9,7 +9,6 @@ import tensorflow as tf
 from stable_baselines.deepq.policies import FeedForwardPolicy
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines import DQN
-# from stable_baselines import PPO1
 from stable_baselines.common.schedules import PiecewiseSchedule
 from wdsEnv import wds
 

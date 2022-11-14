@@ -85,7 +85,7 @@ class MyParser():
             mp[junc] = 0
             while demandIndex < len(self.demands[junc]):
                 patternId = self.demands[junc][patternIndex]
-                patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+                patternFactorPos = i % 288 if len(self.patterns[patternId]) == 288 else i 
                 if (patternId not in self.patterns.keys()):
                     print("Pattern illegal, should be in filed [PATTERNS]")
                     return 
@@ -104,7 +104,7 @@ class MyParser():
             else:
                 continue
             patternId = self.junctions[junc][patternIndex]
-            patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+            patternFactorPos = i % 288 if len(self.patterns[patternId]) == 288 else i 
             if (patternId not in self.patterns.keys()):
                 print("Pattern illegal, should be in filed [PATTERNS]")
                 return 
@@ -121,7 +121,7 @@ class MyParser():
             if (patternId not in self.patterns.keys()):
                 print("Pattern illegal, should be in filed [PATTERNS]")
                 return 
-            patternFactorPos = i if len(self.patterns[patternId]) == 288 else i * 5
+            patternFactorPos = i % 288 if len(self.patterns[patternId]) == 288 else i 
             mp[pump] =float(self.patterns[patternId][patternFactorPos])
         # print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp

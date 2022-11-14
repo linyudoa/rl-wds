@@ -51,7 +51,6 @@ class wds():
                             "J95051", "JINSHUI", "J56841",
                             "PANZHONG", "J77098", "HUAQING",
                             "ZHUGUANG", "J54945", "J101196"} # should fill observable junctionIDs here, to filter needed junctions
-        # self.headMaskKeys = {} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
 
         if (len(self.headMaskKeys) != 0):
@@ -212,7 +211,7 @@ class wds():
         # Tweaking reward
         # ----- ----- ----- ----- -----
                         #reward  = 5
-                        reward  = 5/self.maxReward
+                        reward  = 5 /self.maxReward
         # ----- ----- ----- ----- -----
                     else:
                         reward = self.lazinessPenalty
@@ -347,7 +346,7 @@ class wds():
             else:
                 print("Error, curve is either head nor efficiency")
         return head_curves, eff_curves
-    
+
     def get_junction_heads(self):
         return self._get_junction_heads()
 
@@ -358,7 +357,7 @@ class wds():
                         dtype   = np.float32)
         for junc_id in range(len(self.headDict)):
             junc_heads[junc_id] = self.wds.junctions[str(self.headDict[junc_id])].head
-        return junc_heads + 30
+        return junc_heads
 
     def get_observation(self):
         heads   = (2*self.get_junction_heads() / self.maxHead) - 1
@@ -398,15 +397,15 @@ class wds():
 
     def apply_demandSnapshot(self, i):
         """Generate demand from pattern with step index i"""
-        # parser = MyParser(self.pathToWDS)
-        # parser.readField("[PATTERNS]")
-        # parser.readField("[JUNCTIONS]")
-        # parser.readField("[DEMANDS]")
-        # demandMap = parser.demandSnapshot(i)
-        # for junction in self.wds.junctions:
-        #     if (junction.uid in demandMap.keys()):
-        #         junction.basedemand = demandMap[junction.uid]
-        self.randomize_demand(3800, 8000)
+        parser = MyParser(self.pathToWDS)
+        parser.readField("[PATTERNS]")
+        parser.readField("[JUNCTIONS]")
+        parser.readField("[DEMANDS]")
+        demandMap = parser.demandSnapshot(i)
+        for junction in self.wds.junctions:
+            if (junction.uid in demandMap.keys()):
+                junction.basedemand = demandMap[junction.uid] if abs(demandMap[junction.uid]) < 1 else 0
+        print("sum demand: ", sum(self.wds.junctions.basedemand))
 
     def randomize_demand(self, lo, hi):
         totDemand = random.randint(lo, hi)
@@ -500,10 +499,13 @@ class wds():
 
             valid_heads_score = valid_heads_ratio
             tank_usage_score = demand_to_total
-            energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads
+            energy_eff_score = total_efficiency / self.peakTotEff
             result  = ( self.rewScale[0] * valid_heads_score + 
                         self.rewScale[1] * tank_usage_score + 
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
+            print("valid_heads_score: ", self.rewScale[0] * valid_heads_score)
+            print("tank_usage_score: ", self.rewScale[1] * tank_usage_score)
+            print("energy_eff_score: ", self.rewScale[2] * energy_eff_score)
         else:
             result = 0
         return result
