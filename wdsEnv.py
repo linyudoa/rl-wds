@@ -268,8 +268,8 @@ class wds():
             if self.resetOrigDemands:
                 1
             else:
-                i = random.randint(0, 287)
-                # self.apply_scene(i)
+                i = random.randint(0, 1440)
+                self.apply_scene(i)
             self.optimize_state()
         self.wds.solve()
         observation = self.get_observation()
@@ -508,7 +508,7 @@ class wds():
             
             valid_heads_score = valid_heads_ratio
             tank_usage_score = demand_to_total
-            energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads  / total_pumpHeads
+            # energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads  / total_pumpHeads
             energy_eff_score = total_efficiency / self.peakTotEff
             result  = ( self.rewScale[0] * valid_heads_score + 
                         self.rewScale[1] * tank_usage_score + 
