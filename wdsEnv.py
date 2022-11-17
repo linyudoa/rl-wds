@@ -268,7 +268,7 @@ class wds():
             if self.resetOrigDemands:
                 1
             else:
-                i = random.randint(0, 1440)
+                i = random.randint(0, 1440) # gen a snapshot from 1440 scenes
                 self.apply_scene(i)
             self.optimize_state()
         self.wds.solve()
@@ -444,6 +444,7 @@ class wds():
 
     def calculate_pump_efficiencies(self):
         """calculate efficiencies from speeds"""
+        self.pump_heads = []
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
             curve_id    = pump.curve.uid[:]
@@ -505,17 +506,18 @@ class wds():
 
             total_efficiency    = np.prod(self.pumpEffs)
             total_pumpHeads = np.prod(self.pump_heads)
+            print(self.pump_heads)
             
             valid_heads_score = valid_heads_ratio
             tank_usage_score = demand_to_total
-            # energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads  / total_pumpHeads
+            # energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads
             energy_eff_score = total_efficiency / self.peakTotEff
             result  = ( self.rewScale[0] * valid_heads_score + 
                         self.rewScale[1] * tank_usage_score + 
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
-            print("valid_heads_score: ", self.rewScale[0] * valid_heads_score)
-            print("tank_usage_score: ", self.rewScale[1] * tank_usage_score)
-            print("energy_eff_score: ", self.rewScale[2] * energy_eff_score)
+            # print("valid_heads_score: ", self.rewScale[0] * valid_heads_score)
+            # print("tank_usage_score: ", self.rewScale[1] * tank_usage_score)
+            # print("energy_eff_score: ", self.rewScale[2] * energy_eff_score)
         else:
             result = 0
         return result
