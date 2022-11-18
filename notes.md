@@ -47,3 +47,7 @@ Problems:
     Need to figure out how to use wdm model on epanet
     Figure out what does tank/reservoir pattern mean
 
+need to replay complete scene by emitting details of temporal simulation
+
+1. replay and emit data like tank level of snapshots
+2. apply tank level while applying snapshots
