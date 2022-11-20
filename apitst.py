@@ -51,7 +51,7 @@ from wdsEnv import wds
 # print("avg time: ", (time_end - time_start) / n_scenes, " for each scene")
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=10, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -87,7 +87,7 @@ env = wds(
 )
 
 for scene_id in range(n_scenes):
-    env.apply_demandSnapshot(scene_id)
-    # env.wds.solve()
-    # print(env.get_junction_heads())
-    # print(env.get_state_value())
+    env.apply_scene(scene_id)
+    env.wds.solve()
+    print(env.get_junction_heads())
+    print(env.get_state_value())

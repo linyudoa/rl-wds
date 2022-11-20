@@ -93,17 +93,17 @@ class wds():
         self.peakTotHeads = np.prod(peak_heads)
 
         # Theoretical bounds of {head, efficiency} of pumps in pumpgroup
+        peak_effs = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
         for i, group in enumerate(self.pumpGroup):
             pump        = self.wds.pumps[group[0]]
             curve_id    = pump.curve.uid[:]
             if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
-            peak_effs  = []
             key = curve_id
             max_q       = np.max(nomECurvePtsDict[key][:,0])
             opti_result = minimize(
                 -self.nomECurvePoliDict[key], x0=1, bounds=[(0, max_q)])
-            peak_effs.append(self.nomHCurvePoliDict[key](opti_result.x[0]))
-        self.peakTotEff = np.prod(peak_effs)
+            peak_effs[i] = self.nomECurvePoliDict[key](opti_result.x[0])
+        self.peakTotEff = peak_effs
 
         # Reward control
         self.dimensions     = len(self.pumpGroup)
@@ -512,7 +512,6 @@ class wds():
 
             total_efficiency    = np.prod(self.pumpEffs)
             total_pumpHeads = np.prod(self.pump_heads)
-            print(self.pump_heads)
             
             valid_heads_score = valid_heads_ratio
             tank_usage_score = demand_to_total

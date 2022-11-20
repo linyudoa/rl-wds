@@ -16,6 +16,8 @@ class MyParser():
         self.demands = {}
         self.pumps = {}
 
+        self.loadFiles()
+
     def loadFiles(self):
         fileHandler = open(self.pathToInp, "r", encoding='latin1')
         self.inpLines = fileHandler.readlines()
@@ -159,9 +161,5 @@ class MyParser():
 # pathToWds = "water_networks/QDMaster_master.inp"
 # pathToTankLevel = "water_networks/QDMaster_master_tank_level.txt"
 # parser = MyParser(pathToWds, pathToTankLevel)
-# parser.readWdsField("[PATTERNS]")
-# parser.readWdsField("[DEMANDS]")
-# parser.readWdsField("[PUMPS]")
-# parser.readTankSeries()
 # for i in range(1440):
-#     print(i, " ", parser.tankLevelSnapshot(i))
+#     print(i, " ", parser.demandSnapshot(i))
