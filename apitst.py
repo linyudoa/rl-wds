@@ -87,7 +87,7 @@ env = wds(
 )
 
 for scene_id in range(n_scenes):
-    env.apply_scene(scene_id)
-    env.wds.solve()
-    print(env.get_junction_heads())
-    print(env.get_state_value())
+    env.apply_demandSnapshot(scene_id)
+    # env.wds.solve()
+    # print(env.get_junction_heads())
+    # print(env.get_state_value())

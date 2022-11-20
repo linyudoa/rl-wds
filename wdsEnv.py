@@ -33,9 +33,8 @@ class wds():
         self.pathToRoot  = os.path.dirname(os.path.realpath(__file__))
         self.wds_name = wds_name
         self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'.inp')
-
+        self.pathToTankLevel   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'_tank_level.txt')
         self.wds        = Network(self.pathToWDS)
-        self.apply_demandSnapshot(0) # using demand at timestamp 0 as original demand
         self.demandDict = self.build_demand_dict()
         self.pumpGroup = pump_group
         self.pump_speeds = np.ones(shape=(len(self.pumpGroup)), dtype=np.float32)
@@ -43,6 +42,8 @@ class wds():
         self.tmpfile_name = ""
         self.pathToTmpWds = ""
 
+        self.parser = MyParser(self.pathToWDS, self.pathToTankLevel)
+        
         self.headMaskKeys = {"HUAYI", "J40379", "J40543",
                             "JIAHUA", "JIXI", "J49895",
                             "J59970", "J110064", "J107956",
@@ -52,6 +53,9 @@ class wds():
                             "PANZHONG", "J77098", "HUAQING",
                             "ZHUGUANG", "J54945", "J101196"} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
+        self.tankKeys = ["XFX-Tank", "HX-TANK"]
+        self.reserviorKeys = ["XJ-R1", "XJ-R2"]
+        self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
             for i, key in enumerate(self.headMaskKeys):
@@ -403,18 +407,15 @@ class wds():
     def apply_scene(self, i):
         self.apply_demandSnapshot(i)
         self.apply_pumpSpeedSnapshot(i)
+        self.apply_tankSnapShot(i)
 
     def apply_demandSnapshot(self, i):
         """Generate demand from pattern with step index i"""
-        parser = MyParser(self.pathToWDS)
-        parser.readField("[PATTERNS]")
-        parser.readField("[JUNCTIONS]")
-        parser.readField("[DEMANDS]")
-        demandMap = parser.demandSnapshot(i)
+        demandMap = self.parser.demandSnapshot(i)
         for junction in self.wds.junctions:
             if (junction.uid in demandMap.keys()):
                 junction.basedemand = demandMap[junction.uid] if abs(demandMap[junction.uid]) < 1 else 0
-        print("sum demand: ", sum(self.wds.junctions.basedemand))
+        print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
 
     def randomize_demand(self, lo, hi):
         totDemand = random.randint(lo, hi)
@@ -424,13 +425,18 @@ class wds():
 
     def apply_pumpSpeedSnapshot(self, i):
         """Generate pump speeds from pattern with timestamp i"""
-        parser = MyParser(self.pathToWDS)
-        parser.readField("[PATTERNS]")
-        parser.readField("[PUMPS]")
-        pumpSpeedMap = parser.pumpSpeedSnapshot(i)
+        pumpSpeedMap = self.parser.pumpSpeedSnapshot(i)
         for pump in self.wds.pumps:
             if (pump.uid in pumpSpeedMap.keys()):
                 pump.speed = pumpSpeedMap[pump.uid]
+
+    def apply_tankSnapShot(self, i):
+        """Apply tank levels from simulated data with timestamp i"""
+        levelList = self.parser.tankLevelSnapshot(i)
+        self.wds.tanks[self.tankKeys[0]].tanklevel = levelList[0]
+        self.wds.tanks[self.tankKeys[1]].tanklevel = levelList[1]
+        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2]
+        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[3]
 
 # # for orig
 #     def calculate_pump_efficiencies(self):

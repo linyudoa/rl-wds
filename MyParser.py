@@ -3,24 +3,50 @@ from functools import reduce
 class MyParser():
     """Resolve WDS state from input file"""
     def __init__(self,
-            pathToInp):
+            pathToInp, 
+            pathToTankSeries = None):
         self.pathToInp = pathToInp
-        self.lines = []
-        self.loadFile()
+        self.pathToTankSeries = pathToTankSeries
+        self.inpLines = []
+        self.tankLines = []
+        self.tankLevels = {}
+        self.loadFiles()
         self.patterns = {}
         self.junctions = {}
         self.demands = {}
         self.pumps = {}
 
-    def loadFile(self):
+    def loadFiles(self):
         fileHandler = open(self.pathToInp, "r", encoding='latin1')
-        self.lines = fileHandler.readlines()
-    
-    def readField(self, indicateStr):
+        self.inpLines = fileHandler.readlines()
+        fileHandler.close()
+        self.readWdsField("[PATTERNS]")
+        self.readWdsField("[DEMANDS]")
+        self.readWdsField("[PUMPS]")
+        if (self.pathToTankSeries):
+            fileHandler = open(self.pathToTankSeries, "r", encoding='latin1')
+            fileHandler.readline()
+            self.tankLines = fileHandler.readlines()
+            fileHandler.close()
+            self.readTankSeries()
+
+    def readTankSeries(self):
+        count = 0
+        mp = {}
+        for line in self.tankLines:
+            lineItems = line.strip().split()
+            if (len(lineItems) == 0): continue
+            key = count
+            vals = lineItems[1:]
+            mp[key] = list(map(float, vals))
+            count += 1
+        self.tankLevels = mp
+
+    def readWdsField(self, indicateStr):
         vldFlag = False
         mp = {}
         count = 0
-        for line in self.lines:
+        for line in self.inpLines:
             line = line.strip().rstrip(';')
             if (line.rfind(';') > -1): 
                 pos = line.rfind(';')
@@ -40,7 +66,7 @@ class MyParser():
                         mp[key].append(val)
                     else:
                         mp[key] = [val]
-                        count += 1
+                count += 1
             if (lineItems[0] == indicateStr):
                 vldFlag = True
         if (indicateStr == "[PATTERNS]"):
@@ -66,7 +92,7 @@ class MyParser():
             return
         for key in field.keys():
             print("Key: ", key)
-            print(field[key][-1])
+            print(len(field[key]))
         if (len(field) == 0):
             print("Field empty")
             return
@@ -76,6 +102,9 @@ class MyParser():
         self.fill_demands_from_demands(i, mp)
         self.fill_demands_from_junctions(i, mp)
         return mp
+
+    def tankLevelSnapshot(self, i : int):
+        return [self.tankLevels[i][0], self.tankLevels[i][1], self.tankLevels[i][2], self.tankLevels[i][3]]
 
     def fill_demands_from_demands(self, i, mp : dict):
         """Create nodal demand of timeStamp i"""
@@ -126,12 +155,13 @@ class MyParser():
         # print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
 
-# test code
-# pathToWds = "water_networks/QDMaster1031_master.inp"
-# parser = MyParser(pathToWds)
-# parser.readField("[PATTERNS]")
-# parser.readField("[DEMANDS]")
-# parser.readField("[PUMPS]")
-# parser.summarizeField("[PUMPS]")
-# for i in range(288):
-#     parser.pumpSpeedSnapshot(i)
+## test code
+# pathToWds = "water_networks/QDMaster_master.inp"
+# pathToTankLevel = "water_networks/QDMaster_master_tank_level.txt"
+# parser = MyParser(pathToWds, pathToTankLevel)
+# parser.readWdsField("[PATTERNS]")
+# parser.readWdsField("[DEMANDS]")
+# parser.readWdsField("[PUMPS]")
+# parser.readTankSeries()
+# for i in range(1440):
+#     print(i, " ", parser.tankLevelSnapshot(i))
