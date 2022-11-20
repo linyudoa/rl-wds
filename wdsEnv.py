@@ -93,17 +93,13 @@ class wds():
         self.peakTotHeads = np.prod(peak_heads)
 
         # Theoretical bounds of {head, efficiency} of pumps in pumpgroup
-        peak_effs = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
-        for i, group in enumerate(self.pumpGroup):
-            pump        = self.wds.pumps[group[0]]
-            curve_id    = pump.curve.uid[:]
-            if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
-            key = curve_id
-            max_q       = np.max(nomECurvePtsDict[key][:,0])
-            opti_result = minimize(
-                -self.nomECurvePoliDict[key], x0=1, bounds=[(0, max_q)])
-            peak_effs[i] = self.nomECurvePoliDict[key](opti_result.x[0])
-        self.peakTotEff = peak_effs
+        peak_effs  = []
+        for key in self.nomHCurvePoliDict.keys():
+            max_q       = np.max(nomHCurvePtsDict[key][:,0])
+            eff_poli    = self.nomECurvePoliDict[key]
+            opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
+            peak_effs.append(eff_poli(opti_result.x[0]))
+        self.peakTotEff = 80
 
         # Reward control
         self.dimensions     = len(self.pumpGroup)
@@ -457,7 +453,7 @@ class wds():
             if (curve_id[-1] == 'E'): curve_id    = curve_id[:-1]
             self.pump_heads.append(pump.downstream_node.head - pump.upstream_node.head)
             eff_poli    = self.nomECurvePoliDict[curve_id]
-            self.pumpEffs[i]   = eff_poli(pump.flow / pump.speed)
+            self.pumpEffs[i]   = eff_poli(pump.flow)
 
     # mapping junction uid->basedemand
     def build_demand_dict(self):
@@ -508,15 +504,14 @@ class wds():
                 [junction.basedemand for junction in self.wds.junctions])
             total_tank_flow = sum(
                 [tank.inflow+tank.outflow for tank in self.wds.tanks])
-            demand_to_total = total_demand / (total_demand+total_tank_flow)
+            tank_usage_score = total_demand / (total_demand+total_tank_flow)
 
             total_efficiency    = np.prod(self.pumpEffs)
             total_pumpHeads = np.prod(self.pump_heads)
             
             valid_heads_score = valid_heads_ratio
-            tank_usage_score = demand_to_total
-            # energy_eff_score = total_efficiency / self.peakTotEff * self.peakTotHeads / total_pumpHeads
             energy_eff_score = total_efficiency / self.peakTotEff
+            # print(total_efficiency, self.peakTotEff)
             result  = ( self.rewScale[0] * valid_heads_score + 
                         self.rewScale[1] * tank_usage_score + 
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
