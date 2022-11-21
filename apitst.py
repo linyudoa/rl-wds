@@ -71,15 +71,17 @@ def plot1Dline(points : list):
     plt.savefig("ctr_head.png")
     plt.show()
 
-headPoints = []
+points = []
 
 count = 1
 
-for scene_id in range(n_scenes):
+for scene_id in range(0, 10):
     env.apply_scene(scene_id)
     env.wds.solve()
-    headPoints.append(env.get_point_head(env.controlPoint))
+    print(env.pump_speeds)
+    # headPoints.append(env.get_point_head(env.controlPoint))
+    points.append(env.get_state_value())
     count += 1
-    print(count / n_scenes, " ", headPoints[-1])
+    print(count / n_scenes, " ", points[-1])
 
-plot1Dline(headPoints)
+# plot1Dline(headPoints)
