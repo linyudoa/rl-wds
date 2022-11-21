@@ -127,7 +127,7 @@ class wds():
         self.totalDemandHi  = total_demand_hi
         self.speedIncrement = speed_increment # increment of pump speed, can adjust
         self.speedLimitLo   = .7
-        self.speedLimitHi   = 1.2
+        self.speedLimitHi   = 1.05
         self.validSpeeds   = np.arange(
                                 self.speedLimitLo,
                                 self.speedLimitHi+.001,

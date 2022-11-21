@@ -276,7 +276,7 @@ class particle_swarm_optimization():
         toolbox.register("evaluate",
             reward_to_deap)
     
-        env.wds.junctions.basedemand    = scene_df.loc[scene_id]
+        env.apply_scene(scene_id)
         pop     = toolbox.population(n=MU)
         best    = None
         for g in range(NGEN):
