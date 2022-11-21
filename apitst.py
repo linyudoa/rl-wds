@@ -11,6 +11,7 @@ import wntr
 import time
 # -*- coding: utf-8 -*-
 import argparse
+import matplotlib.pyplot as plt
 import os
 import yaml
 import numpy as np
@@ -23,7 +24,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -58,10 +59,27 @@ env = wds(
         seed            = args.seed
 )
 
+def plot1Dline(points : list):
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    points1D = np.array(points)
+    ax.plot(points1D, 'bo-', mfc = 'red', mec = 'red', ms = 2, linewidth = 1, label='line')
+    
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+
+    plt.savefig("ctr_head.png")
+    plt.show()
+
 headPoints = []
+
+count = 1
 
 for scene_id in range(n_scenes):
     env.apply_scene(scene_id)
     env.wds.solve()
     headPoints.append(env.get_point_head(env.controlPoint))
-    print(headPoints[-1])
+    count += 1
+    print(count / n_scenes, " ", headPoints[-1])
+
+plot1Dline(headPoints)

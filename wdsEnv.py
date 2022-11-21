@@ -57,6 +57,8 @@ class wds():
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
+        self.demandLimitLo = -0.8
+        self.demandLimitHi = 0.8
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -416,7 +418,7 @@ class wds():
         demandMap = self.parser.demandSnapshot(i)
         for junction in self.wds.junctions:
             if (junction.uid in demandMap.keys()):
-                junction.basedemand = demandMap[junction.uid] if abs(demandMap[junction.uid]) < 0.8 else 0
+                junction.basedemand = demandMap[junction.uid] if demandMap[junction.uid] > self.demandLimitLo and demandMap[junction.uid] < self.demandLimitHi else 0
         # print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
 
     def randomize_demand(self, lo, hi):
