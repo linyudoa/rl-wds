@@ -44,12 +44,18 @@ validate the model by:
 6. Compare head, energy efficiency of history and validate data
 
 Problems:
-    Need to figure out how to use wdm model on epanet done
-    Figure out what does tank/reservoir pattern mean done
+    Need to figure out how to use wdm model on epanet **done**
+    Figure out what does tank/reservoir pattern mean **done**
 
-need to replay complete scene by emitting details of temporal simulation
+need to replay complete scene by emitting details of temporal simulation **done**
 
-1. replay and emit data like tank level of snapshots
-2. apply tank level while applying snapshots
+1. replay and emit data like tank level of snapshots **done**
+2. apply tank level while applying snapshots **done**
    
-also need to use hiscorical water demand porpotion to init randomized demands
+also need to use hiscorical water demand porpotion to init randomized demands **todo**
+
+todo from 11.21:
+1. Modify reward logic to mimic QD eval planning 
+2. Figure out how to calc pump energy consumption
+3. Train and validate, mainly focus on energy eff
+4. Visualize Ops by saving them, add logic to plot
