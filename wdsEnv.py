@@ -433,14 +433,15 @@ class wds():
         for pump in self.wds.pumps:
             if (pump.uid in pumpSpeedMap.keys()):
                 pump.speed = pumpSpeedMap[pump.uid]
-
+                pump.initstatus = 1 if (pump.speed > 0.001) else 0
+    
     def apply_tankSnapShot(self, i):
         """Apply tank levels from simulated data with timestamp i"""
         levelList = self.parser.tankLevelSnapshot(i)
         self.wds.tanks[self.tankKeys[0]].tanklevel = levelList[0]
         self.wds.tanks[self.tankKeys[1]].tanklevel = levelList[1]
         self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2]
-        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[3]
+        self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3]
 
 # # for orig
 #     def calculate_pump_efficiencies(self):
