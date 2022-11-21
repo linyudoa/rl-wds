@@ -1,8 +1,8 @@
 env:
     waterNet        : QDMaster
-    speedIncrement  : .05
+    speedIncrement  : .02
     episodeLen      : 48
-    pumpGroups      : [['XJ-P2', 'XJ-P4']]
+    pumpGroups      : [['XJ-P2'], ['XJ-P4'], ['XJ-P9']]
     totalDemandLo   : 0.7
     totalDemandHi   : 1.5
     resetOrigDemands    : False

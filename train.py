@@ -121,8 +121,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     global best_metric
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
-        env.wds.junctions.basedemand    = scenes.loc[scene_id]
-        env.apply_pumpSpeedSnapshot(scene_id)
+        env.apply_scene(scene_id)
         obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
@@ -139,7 +138,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
         print("validating ", scene_id + 1, " in ", len(scenes), " scenes, reward = ", reward)
         cummulated_reward   += reward
         if tst:
-            print(env.get_pump_speeds())
+            # print(env.get_pump_speeds())
+            1
         if not tst:
             df_view = history.loc[step_id].loc[scene_id].copy(deep=False)
         else:

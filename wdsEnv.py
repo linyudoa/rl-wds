@@ -99,7 +99,7 @@ class wds():
             eff_poli    = self.nomECurvePoliDict[key]
             opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
             peak_effs.append(eff_poli(opti_result.x[0]))
-        self.peakTotEff = 80
+        self.peakTotEff = 80*85*80
 
         # Reward control
         self.dimensions     = len(self.pumpGroup)
