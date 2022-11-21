@@ -16,7 +16,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=12, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -98,11 +98,10 @@ class nelder_mead_method():
         for i in range(env.dimensions):
             init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
 
-        env.wds.junctions.basedemand    = scene_df.loc[scene_id]
+        env.apply_scene(scene_id)
         options     = { 'maxfev': 1000,
                         'xatol' : .005,
                         'fatol' : .01}
-        env.apply_pumpSpeedSnapshot(scene_id)
         result  = neldermead(
             reward_to_scipy,
             init_guess,
@@ -115,6 +114,7 @@ class nelder_mead_method():
         result_df['index']     = scene_id
         result_df['reward']    = -result.fun
         result_df['evals']     = result.nit
+        print(result_df)
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
         return result_df
