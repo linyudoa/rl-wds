@@ -114,9 +114,9 @@ class nelder_mead_method():
         result_df['index']     = scene_id
         result_df['reward']    = -result.fun
         result_df['evals']     = result.nit
-        print(result_df)
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
+        print(result_df)
         return result_df
 
 class differential_evolution():
