@@ -10,6 +10,7 @@ from functools import reduce
 from pipe import select, where
 from epynet import Network
 from opti_algorithms import nm, rs
+import math
 
 class wds():
     """Gym-like environment for water distribution systems."""
@@ -44,7 +45,7 @@ class wds():
 
         self.parser = MyParser(self.pathToWDS, self.pathToTankLevel)
         
-        self.headMaskKeys = {"HUAYI", "J40379", "J40543",
+        self.headMaskKeys = {"HUAYI", "QINGDONG", "J40543",
                             "JIAHUA", "JIXI", "J49895",
                             "J59970", "J110064", "J107956",
                             "J79998", "HUAYU", "J111568",
@@ -55,6 +56,7 @@ class wds():
         self.headDict = {}
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
+        self.controlPoint = "QINGDONG"
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -107,7 +109,7 @@ class wds():
         self.headLimitLo    = 16
         self.headLimitHi    = 60
         self.maxHead        = np.max(peak_heads)
-        self.rewScale       = [8,4,2] # mut factors of head demand, tank, energy eff
+        self.rewScale       = [8,4,2] # mut factors of valid head, head ratio, pump eff
         # 4,4,2   3.5,3.5,3     3,3,4     2.5,2.5,5
         self.baseReward     = +1
         self.bumpPenalty    = -1
@@ -359,6 +361,10 @@ class wds():
     def get_junction_heads(self):
         return self._get_junction_heads()
 
+    def get_point_head(self, junc_uid):
+        '''Get a single point head'''
+        return self.wds.junctions[str(junc_uid)].head
+
     def _get_junction_heads(self):
         """fill an array of junction head dict"""
         junc_heads = np.empty(
@@ -410,8 +416,8 @@ class wds():
         demandMap = self.parser.demandSnapshot(i)
         for junction in self.wds.junctions:
             if (junction.uid in demandMap.keys()):
-                junction.basedemand = demandMap[junction.uid] if abs(demandMap[junction.uid]) < 1 else 0
-        print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
+                junction.basedemand = demandMap[junction.uid] if abs(demandMap[junction.uid]) < 0.8 else 0
+        # print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
 
     def randomize_demand(self, lo, hi):
         totDemand = random.randint(lo, hi)
@@ -500,20 +506,20 @@ class wds():
                 np.count_nonzero(heads > self.headLimitHi))
             valid_heads_ratio   = 1 - (invalid_heads_count / len(heads)) # calc valid head ratio
 
-            total_demand    = sum(
-                [junction.basedemand for junction in self.wds.junctions])
-            total_tank_flow = sum(
-                [tank.inflow+tank.outflow for tank in self.wds.tanks])
-            tank_usage_score = total_demand / (total_demand+total_tank_flow)
+            # total_demand    = sum(
+            #     [junction.basedemand for junction in self.wds.junctions])
+            # total_tank_flow = sum(
+            #     [tank.inflow+tank.outflow for tank in self.wds.tanks])
+            # tank_usage_score = total_demand / (total_demand+total_tank_flow)
 
             total_efficiency    = np.prod(self.pumpEffs)
-            total_pumpHeads = np.prod(self.pump_heads)
+            control_head = self.get_point_head(self.controlPoint)
             
             valid_heads_score = valid_heads_ratio
+            control_head_ratio = math.exp(-(control_head - self.headLimitLo) / 25)
             energy_eff_score = total_efficiency / self.peakTotEff
-            # print(total_efficiency, self.peakTotEff)
             result  = ( self.rewScale[0] * valid_heads_score + 
-                        self.rewScale[1] * tank_usage_score + 
+                        self.rewScale[1] * control_head_ratio + 
                         self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
             # print("valid_heads_score: ", self.rewScale[0] * valid_heads_score)
             # print("tank_usage_score: ", self.rewScale[1] * tank_usage_score)

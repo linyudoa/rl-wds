@@ -10,7 +10,7 @@ RL的优势介绍：训练快速、实时预测、运行时不需模型 √
 
 HEAD DICT:
 HUAYI: 华益
-J40379: 青东
+QINGDONG: 青东
 J40543: 华新
 JIAHUA: 嘉华
 JIXI: 纪西
@@ -52,10 +52,10 @@ need to replay complete scene by emitting details of temporal simulation **done*
 1. replay and emit data like tank level of snapshots **done**
 2. apply tank level while applying snapshots **done**
    
-also need to use hiscorical water demand porpotion to init randomized demands **todo**
+also need to use hiscorical water demand porpotion to init randomized demands **todo after December**
 
 todo from 11.21:
 1. Modify reward logic to mimic QD eval planning 
-2. Figure out how to calc pump energy consumption
+2. Figure out how to calc pump energy consumption -- from speed to energy
 3. Train and validate, mainly focus on energy eff
 4. Visualize Ops by saving them, add logic to plot

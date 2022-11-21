@@ -23,7 +23,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=5, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=288, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -58,8 +58,10 @@ env = wds(
         seed            = args.seed
 )
 
+headPoints = []
+
 for scene_id in range(n_scenes):
     env.apply_scene(scene_id)
     env.wds.solve()
-    # print(env.get_junction_heads())
-    print(env.get_state_value())
+    headPoints.append(env.get_point_head(env.controlPoint))
+    print(headPoints[-1])
