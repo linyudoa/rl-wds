@@ -78,10 +78,11 @@ count = 1
 for scene_id in range(0, 10):
     env.apply_scene(scene_id)
     env.wds.solve()
-    print(env.pump_speeds)
-    # headPoints.append(env.get_point_head(env.controlPoint))
-    points.append(env.get_state_value())
+    # print(env.wds.solved)
+    # print(env.pump_speeds)
+    print("ctr head: ", env.get_point_head(env.controlPoint))
+    # points.append(env.get_state_value())
     count += 1
-    print(count / n_scenes, " ", points[-1])
+    # print(count / n_scenes, " ", points[-1])
 
 # plot1Dline(headPoints)

@@ -59,3 +59,6 @@ todo from 11.21:
 2. Figure out how to calc pump energy consumption -- from speed to energy
 3. Train and validate, mainly focus on energy eff
 4. Visualize Ops by saving them, add logic to plot
+
+advans of the model: 
+1. Can predict outcome without munipulating the real model
