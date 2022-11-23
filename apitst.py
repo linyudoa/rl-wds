@@ -73,12 +73,17 @@ points = []
 
 count = 1
 
-for scene_id in range(0, 10):
+for scene_id in range(0, 1):
     env.apply_scene(scene_id)
     env.wds.solve()
     # print(env.wds.solved)
-    # print(env.pump_speeds)
-    print("ctr head: ", env.get_point_head(env.controlPoint))
+    print(env.pump_speeds)
+    print(env.wds.reservoirs.elevation)
+    print("1100325-A head: ", env.get_point_head("1100325-A"))
+    print("1100325-B head: ", env.get_point_head("1100325-B"))
+    print("XJ-P2: ", env.wds.pumps["XJ-P2"].__dict__)
+    print("XJ-P4: ", env.wds.pumps["XJ-P4"].__dict__)
+    print("XJ-P9: ", env.wds.pumps["XJ-P9"].__dict__)
     print("highest demand: ", max(env.wds.junctions.basedemand))
     print("lowest demand: ", min(env.wds.junctions.basedemand))
     # points.append(env.get_state_value())

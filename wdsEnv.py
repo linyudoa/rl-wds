@@ -57,8 +57,8 @@ class wds():
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
-        self.demandLimitLo = -300
-        self.demandLimitHi = 20
+        self.demandLimitLo = -5
+        self.demandLimitHi = 5
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -415,7 +415,12 @@ class wds():
         demandMap = self.parser.demandSnapshot(i)
         for junction in self.wds.junctions:
             if (junction.uid in demandMap.keys()):
-                junction.basedemand = demandMap[junction.uid] if demandMap[junction.uid] > self.demandLimitLo and demandMap[junction.uid] < self.demandLimitHi else 0
+                dmd = demandMap[junction.uid] 
+                dmd = dmd if dmd < self.demandLimitHi else self.demandLimitHi
+                dmd = dmd if dmd > self.demandLimitLo else self.demandLimitLo
+                junction.basedemand = dmd
+            else:
+                junction.basedemand = 0
         # print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
 
     def randomize_demand(self, lo, hi):
@@ -438,8 +443,8 @@ class wds():
         levelList = self.parser.tankLevelSnapshot(i)
         self.wds.tanks[self.tankKeys[0]].tanklevel = levelList[0]
         self.wds.tanks[self.tankKeys[1]].tanklevel = levelList[1]
-        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2]
-        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[3]
+        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2] + 1
+        self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3] + 1
 
 # # for orig
 #     def calculate_pump_efficiencies(self):
