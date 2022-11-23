@@ -57,8 +57,8 @@ class wds():
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
-        self.demandLimitLo = -0.95
-        self.demandLimitHi = 0.95
+        self.demandLimitLo = -300
+        self.demandLimitHi = 20
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):

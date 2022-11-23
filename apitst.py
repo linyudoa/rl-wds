@@ -7,8 +7,6 @@ from deap import creator
 from functools import reduce
 from deap import tools
 from wdsEnv import wds
-import wntr 
-import time
 # -*- coding: utf-8 -*-
 import argparse
 import matplotlib.pyplot as plt
@@ -81,6 +79,8 @@ for scene_id in range(0, 10):
     # print(env.wds.solved)
     # print(env.pump_speeds)
     print("ctr head: ", env.get_point_head(env.controlPoint))
+    print("highest demand: ", max(env.wds.junctions.basedemand))
+    print("lowest demand: ", min(env.wds.junctions.basedemand))
     # points.append(env.get_state_value())
     count += 1
     # print(count / n_scenes, " ", points[-1])
