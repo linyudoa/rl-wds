@@ -58,7 +58,7 @@ class wds():
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
         self.demandLimitLo = 0
-        self.demandLimitHi = 10
+        self.demandLimitHi = 8
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
