@@ -22,7 +22,7 @@ class MyParser():
         self.inpLines = fileHandler.readlines()
         fileHandler.close()
         self.readWdsField("[PATTERNS]")
-        self.readWdsField("[DEMANDS]")
+        self.readWdsField("[PUMPS]")
         self.readWdsField("[DEMANDS]")
         self.readWdsField("[JUNCTIONS]")
         if (self.pathToTankSeries):

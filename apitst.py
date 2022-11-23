@@ -69,16 +69,33 @@ def plot1Dline(points : list):
     plt.savefig("ctr_head.png")
     plt.show()
 
+def plot2Dline(points : list):
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    points2d = np.array(points)
+    x = points2d[:, 0]
+    y = points2d[:, 1]
+    # ax.plot(x, y, 'bo-', mfc = 'red', mec = 'red', ms = 5, linewidth = 3, label='line')
+    ax.scatter(x, y, 
+        marker = 'o', 
+        linewidths = 1, c = "green")
+    
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+
+    plt.savefig("ctr_head.png")
+    plt.show()
+    
 points = []
 count = 1
 
-for scene_id in range(5, 10):
+for scene_id in range(0, 100):
     env.apply_scene(scene_id)
     env.wds.solve()
+    print(env.pump_speeds)
     # # print(env.wds.solved)
     # print(env.wds.reservoirs.head)
     # print(env.wds.tanks.head)
-    # # print(env.pump_speeds)
     # print("2 bef head: ", env.get_point_head("1100325-A"))
     # print("2 aft head: ", env.get_point_head("1100325-B"))
     # print("4 bef head: ", env.get_point_head("1100323-A"))
@@ -88,11 +105,15 @@ for scene_id in range(5, 10):
     # print("head of neg dmd point: ", env.get_point_head("J-HCXZ01Z_P"))
     # print("highest demand: ", max(env.wds.junctions.basedemand))
     # print("lowest demand: ", min(env.wds.junctions.basedemand))
-    # print("tot demand: ", sum(env.wds.junctions.basedemand))
+    line = []
+    line.append(sum(env.wds.junctions.basedemand))
+    print("tot demand: ", line[-1])
     # print("net demand: ", sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
     # print("net inflow: ", abs(sum(map(lambda x : x if x < 0 else 0, env.wds.junctions.basedemand))))
-    print("ctr head: ", env.get_point_head(env.controlPoint))
+    line.append(env.get_point_head(env.controlPoint))
+    print("ctr head: ", line[-1])
+    points.append(line)
     count += 1
     # print(count / n_scenes, " ", points[-1])
 
-# plot1Dline(headPoints)
+plot2Dline(points)
