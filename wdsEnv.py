@@ -57,8 +57,8 @@ class wds():
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
-        self.demandLimitLo = -5
-        self.demandLimitHi = 5
+        self.demandLimitLo = -5000
+        self.demandLimitHi = 5000
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -443,8 +443,8 @@ class wds():
         levelList = self.parser.tankLevelSnapshot(i)
         self.wds.tanks[self.tankKeys[0]].tanklevel = levelList[0]
         self.wds.tanks[self.tankKeys[1]].tanklevel = levelList[1]
-        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2] + 1
-        self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3] + 1
+        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2] / 2.0151436661455358
+        self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3] / 4.849658299999999
 
 # # for orig
 #     def calculate_pump_efficiencies(self):

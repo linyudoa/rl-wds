@@ -15,7 +15,6 @@ class MyParser():
         self.junctions = {}
         self.demands = {}
         self.pumps = {}
-
         self.loadFiles()
 
     def loadFiles(self):
@@ -24,7 +23,8 @@ class MyParser():
         fileHandler.close()
         self.readWdsField("[PATTERNS]")
         self.readWdsField("[DEMANDS]")
-        self.readWdsField("[PUMPS]")
+        self.readWdsField("[DEMANDS]")
+        self.readWdsField("[JUNCTIONS]")
         if (self.pathToTankSeries):
             fileHandler = open(self.pathToTankSeries, "r", encoding='latin1')
             fileHandler.readline()
@@ -47,7 +47,6 @@ class MyParser():
     def readWdsField(self, indicateStr):
         vldFlag = False
         mp = {}
-        count = 0
         for line in self.inpLines:
             line = line.strip().rstrip(';')
             if (line.rfind(';') > -1): 
@@ -68,7 +67,6 @@ class MyParser():
                         mp[key].append(val)
                     else:
                         mp[key] = [val]
-                count += 1
             if (lineItems[0] == indicateStr):
                 vldFlag = True
         if (indicateStr == "[PATTERNS]"):
@@ -158,8 +156,7 @@ class MyParser():
         return mp
 
 ## test code
-# pathToWds = "water_networks/QDMaster_master.inp"
-# pathToTankLevel = "water_networks/QDMaster_master_tank_level.txt"
-# parser = MyParser(pathToWds, pathToTankLevel)
-# for i in range(1440):
-#     print(i, " ", parser.demandSnapshot(i))
+pathToWds = "water_networks/QDMaster_master.inp"
+pathToTankLevel = "water_networks/QDMaster_master_tank_level.txt"
+parser = MyParser(pathToWds, pathToTankLevel)
+parser.demandSnapshot(0)
