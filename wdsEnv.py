@@ -55,10 +55,10 @@ class wds():
                             "ZHUGUANG", "J54945", "J101196"} # should fill observable junctionIDs here, to filter needed junctions
         self.headDict = {}
         self.tankKeys = ["XFX-Tank", "HX-TANK"]
-        self.reserviorKeys = ["XJ-R1", "XJ-R2"]
+        self.reserviorKeys = ["XJ-R1", "XJ-R2", "R00003", "R00004", "R00005", "R00006", "R00006"]
         self.controlPoint = "QINGDONG"
         self.demandLimitLo = 0
-        self.demandLimitHi = 6
+        self.demandLimitHi = 5000
         # self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -434,7 +434,7 @@ class wds():
         pumpSpeedMap = self.parser.pumpSpeedSnapshot(i)
         for pump in self.wds.pumps:
             if (pump.uid in pumpSpeedMap.keys()):
-                pump.speed = pumpSpeedMap[pump.uid] if pumpSpeedMap[pump.uid] > 0.65 else 0
+                pump.speed = 1 if pumpSpeedMap[pump.uid] > 0.65 else 0
                 pump.initstatus = 1 if (pump.speed > 0.001) else 0
             else: print("\033[0;31;40m", pump.uid, pumpSpeedMap[pump.uid], "\033[0m")
         self.update_pump_speeds()
@@ -446,8 +446,13 @@ class wds():
         self.wds.tanks[self.tankKeys[1]].tanklevel = levelList[1]
         self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2] / 2.0151436661455358
         self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3] / 4.849658299999999
+        self.wds.reservoirs[self.reserviorKeys[2]].elevation = levelList[4] / 23.7860507965088
+        self.wds.reservoirs[self.reserviorKeys[3]].elevation = levelList[5] / 24.5235137939453
+        self.wds.reservoirs[self.reserviorKeys[4]].elevation = levelList[6] / 23.7945976257324
+        self.wds.reservoirs[self.reserviorKeys[5]].elevation = levelList[7] / 24.4465160369873
+        self.wds.reservoirs[self.reserviorKeys[6]].elevation = levelList[8] / 23.524621963501
 
-# # for orig
+        # # for orig
 #     def calculate_pump_efficiencies(self):
 #         """calculate efficiencies from speeds"""
 #         for i, group in enumerate(self.pumpGroup):

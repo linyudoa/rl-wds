@@ -89,7 +89,7 @@ def plot2Dline(points : list):
 points = []
 count = 1
 
-for scene_id in range(0, 100):
+for scene_id in range(0, 576):
     env.apply_scene(scene_id)
     env.wds.solve()
     print(env.pump_speeds)
@@ -102,8 +102,8 @@ for scene_id in range(0, 100):
     # print("4 aft head: ", env.get_point_head("1100323-B"))
     # print("9 bef head: ", env.get_point_head("1100778-A"))
     # print("9 aft head: ", env.get_point_head("1100778-B"))
-    print("HX bef head: ", env.get_point_head("HX-node7"))
-    print("HX aft head: ", env.get_point_head("HX-node13"))   
+    print("XFX head: ", env.get_point_head("XFX-OP"))
+    print("HX head: ", env.get_point_head("HX-node12"))   
     # print("head of neg dmd point: ", env.get_point_head("J-HCXZ01Z_P"))
     # print("highest demand: ", max(env.wds.junctions.basedemand))
     # print("lowest demand: ", min(env.wds.junctions.basedemand))
@@ -112,8 +112,9 @@ for scene_id in range(0, 100):
     print("tot demand: ", line[-1])
     # print("net demand: ", sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
     # print("net inflow: ", abs(sum(map(lambda x : x if x < 0 else 0, env.wds.junctions.basedemand))))
-    line.append(env.get_point_head("XFX-OP"))
-    print("XFX head: ", line[-1])
+    # line.append(env.get_point_head("XFX-OP"))
+    line.append(env.get_point_head(env.controlPoint))
+    print("Ctr head: ", line[-1])
     points.append(line)
     count += 1
     # print(count / n_scenes, " ", points[-1])

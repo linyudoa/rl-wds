@@ -104,7 +104,7 @@ class MyParser():
         return mp
 
     def tankLevelSnapshot(self, i : int):
-        return [self.tankLevels[i][0], self.tankLevels[i][1], self.tankLevels[i][2], self.tankLevels[i][3]]
+        return self.tankLevels[i]
 
     def fill_demands_from_demands(self, i, mp : dict):
         """Create nodal demand of timeStamp i"""
