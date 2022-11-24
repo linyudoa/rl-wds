@@ -63,3 +63,6 @@ todo from 11.21:
 
 advans of the model: 
 1. Can predict outcome without munipulating the real model
+
+todo 1124:
+1. Change tanks to 

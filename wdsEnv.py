@@ -58,8 +58,8 @@ class wds():
         self.reserviorKeys = ["XJ-R1", "XJ-R2"]
         self.controlPoint = "QINGDONG"
         self.demandLimitLo = 0
-        self.demandLimitHi = 8
-        self.apply_scene(0) # using demand at timestamp 0 as original demand
+        self.demandLimitHi = 6
+        # self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
             for i, key in enumerate(self.headMaskKeys):
@@ -434,8 +434,9 @@ class wds():
         pumpSpeedMap = self.parser.pumpSpeedSnapshot(i)
         for pump in self.wds.pumps:
             if (pump.uid in pumpSpeedMap.keys()):
-                pump.speed = pumpSpeedMap[pump.uid]
+                pump.speed = pumpSpeedMap[pump.uid] if pumpSpeedMap[pump.uid] > 0.65 else 0
                 pump.initstatus = 1 if (pump.speed > 0.001) else 0
+            else: print("\033[0;31;40m", pump.uid, pumpSpeedMap[pump.uid], "\033[0m")
         self.update_pump_speeds()
     
     def apply_tankSnapShot(self, i):
