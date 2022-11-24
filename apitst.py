@@ -6,6 +6,7 @@ from deap import base
 from deap import creator
 from functools import reduce
 from deap import tools
+import math
 from wdsEnv import wds
 # -*- coding: utf-8 -*-
 import argparse
@@ -19,10 +20,11 @@ from deap import base
 from deap import creator
 from deap import tools
 from wdsEnv import wds
+import logging
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=5, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -87,15 +89,27 @@ def plot2Dline(points : list):
     plt.show()
     
 points = []
-count = 1
+count = 0
+dissatcount = 0
+rewards = []
 
-for scene_id in range(0, 576):
+logger = logging.getLogger("logwds")
+logger.setLevel(level = logging.INFO)
+handler = logging.FileHandler("log.txt")
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.info(str.format("Start print log"))
+for scene_id in range(0, n_scenes):
     env.apply_scene(scene_id)
+    logger.info(str.format("scene_id {0}", scene_id))
     env.wds.solve()
-    print(env.pump_speeds)
+    print("Pump speeds", env.pump_speeds)
+    logger.info(env.pump_speeds)
     # # print(env.wds.solved)
     print(env.wds.reservoirs.head)
-    print(env.wds.tanks.head)
+    logger.info(env.wds.reservoirs.head)
     # print("2 bef head: ", env.get_point_head("1100325-A"))
     # print("2 aft head: ", env.get_point_head("1100325-B"))
     # print("4 bef head: ", env.get_point_head("1100323-A"))
@@ -103,20 +117,36 @@ for scene_id in range(0, 576):
     # print("9 bef head: ", env.get_point_head("1100778-A"))
     # print("9 aft head: ", env.get_point_head("1100778-B"))
     print("XFX head: ", env.get_point_head("XFX-OP"))
+    logger.info(str.format("XFX head: {0}", env.get_point_head("XFX-OP")))
     print("HX head: ", env.get_point_head("HX-node12"))   
+    logger.info(str.format("HX head: {0}", env.get_point_head("HX-node12")))
     # print("head of neg dmd point: ", env.get_point_head("J-HCXZ01Z_P"))
     # print("highest demand: ", max(env.wds.junctions.basedemand))
     # print("lowest demand: ", min(env.wds.junctions.basedemand))
     line = []
     line.append(sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
     print("tot demand: ", line[-1])
+    logger.info(str.format("tot demand: {0}", line[-1]))
     # print("net demand: ", sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
     # print("net inflow: ", abs(sum(map(lambda x : x if x < 0 else 0, env.wds.junctions.basedemand))))
     # line.append(env.get_point_head("XFX-OP"))
     line.append(env.get_point_head(env.controlPoint))
-    print("Ctr head: ", line[-1])
+    rewards.append(env.get_state_value())
+    logger.info(str.format("Reward is {0}", rewards[-1]))
+    if (line[-1] < 16): 
+        print("\033[0;31;40m", line[-1], "\033[0m")
+        logger.error(str.format("Ctr head: {0}", line[-1]))
+        dissatcount += 1
+    else: 
+        print("Ctr head: ", line[-1])
+        logger.info(str.format("Ctr head: {0}", line[-1]))
     points.append(line)
     count += 1
-    # print(count / n_scenes, " ", points[-1])
-
+    print(str.format("----------{0} DONE----------", count / n_scenes))
+    logger.info(str.format("----------{0} DONE----------", count / n_scenes))
+print(str.format("Generation done, total scneces: {0}; dissatsfied count: {1}", n_scenes, dissatcount))
+logger.info(str.format("Generation done, total scneces: {0}; dissatsfied count: {1}", n_scenes, dissatcount))
+print(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
+logger.info(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
+logger.info("Finish")
 plot2Dline(points)
