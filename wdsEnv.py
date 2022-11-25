@@ -438,6 +438,9 @@ class wds():
                 pump.initstatus = 1 if (pump.speed > 0.001) else 0
             else: print("\033[0;31;40m", pump.uid, pumpSpeedMap[pump.uid], "\033[0m")
         self.update_pump_speeds()
+        self.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = self.pump_speeds[0])
+        self.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = self.pump_speeds[1])
+        self.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = self.pump_speeds[2])
     
     def apply_tankSnapShot(self, i):
         """Apply tank levels from simulated data with timestamp i"""
