@@ -42,6 +42,7 @@ class wds():
         self.pumpEffs   = np.empty(shape=(len(self.pumpGroup)), dtype=np.float32)
         self.tmpfile_name = ""
         self.pathToTmpWds = ""
+        self.totDmd = 0
 
         self.parser = MyParser(self.pathToWDS, self.pathToTankLevel)
         
@@ -248,6 +249,7 @@ class wds():
                 self.n_siesta   += 1
                 if self.n_siesta == 3:
                     self.done   = True
+            self.update_pump_speeds()
             self.wds.solve()
             reward  = self.get_state_value()
         observation = self.get_observation()
@@ -255,13 +257,6 @@ class wds():
 
     def reset(self, training=True):
         """Reset to Original pump speeds and demand, original means historic"""
-        # if self.resetOrigPumpSpeeds:
-        #     1
-        # else:
-        #     for pump_grp in self.pumpGroup:
-        #         initial_speed   = np.random.choice(self.validSpeeds)
-        #         for pump in pump_grp:
-        #             self.wds.pumps[pump].speed  = initial_speed
         if training:
             if self.resetOrigDemands:
                 1
@@ -356,9 +351,9 @@ class wds():
     def get_junction_heads(self):
         return self._get_junction_heads()
 
-    def get_point_head(self, junc_uid):
+    def get_point_pressure(self, junc_uid):
         '''Get a single point head'''
-        return self.wds.junctions[str(junc_uid)].head
+        return self.wds.junctions[str(junc_uid)].pressure
 
     def get_pump_state(self, pump_id):
         '''Get a single point head'''
@@ -406,22 +401,13 @@ class wds():
             junction.basedemand *= target_sum_of_demands / sum_of_random_demands
 
     def apply_scene(self, i):
-        self.apply_demandSnapshot(i)
-        self.apply_pumpSpeedSnapshot(i)
-        self.apply_tankSnapShot(i)
+        self.calc_totdemand(i)
+        self.apply_pumpStatusSnapshot(i)
 
-    def apply_demandSnapshot(self, i):
+    def calc_totdemand(self, i):
         """Generate demand from pattern with step index i"""
         demandMap = self.parser.demandSnapshot(i)
-        for junction in self.wds.junctions:
-            if (junction.uid in demandMap.keys()):
-                dmd = demandMap[junction.uid] 
-                dmd = dmd if dmd < self.demandLimitHi else self.demandLimitHi
-                dmd = dmd if dmd > self.demandLimitLo else self.demandLimitLo
-                junction.basedemand = dmd
-            else:
-                junction.basedemand = 0
-        # print(i, " sum demand: ", sum(self.wds.junctions.basedemand))
+        self.totDmd = sum(demandMap.values())
 
     def randomize_demand(self, lo, hi):
         totDemand = random.randint(lo, hi)
@@ -429,7 +415,7 @@ class wds():
         for junction in self.wds.junctions:
             junction.basedemand = totDemand / num
 
-    def apply_pumpSpeedSnapshot(self, i):
+    def apply_pumpStatusSnapshot(self, i):
         """Generate pump speeds from pattern with timestamp i"""
         pumpSpeedMap = self.parser.pumpSpeedSnapshot(i)
         for pump in self.wds.pumps:
@@ -520,7 +506,7 @@ class wds():
             valid_heads_ratio   = 1 - (invalid_heads_count / len(heads)) # calc valid head ratio
 
             total_efficiency    = np.prod(self.pumpEffs)
-            control_head = self.get_point_head(self.controlPoint)
+            control_head = self.get_point_pressure(self.controlPoint)
             
             valid_heads_score = valid_heads_ratio
             control_head_ratio = math.exp(-(control_head - self.headLimitLo) / 25)
@@ -544,6 +530,7 @@ class wds():
         for group_id, pump_group in enumerate(self.pumpGroup):
             for pump in pump_group:
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
+        self.update_pump_speeds()
         self.wds.solve()
         return self.get_state_value()
         
@@ -556,9 +543,12 @@ class wds():
         return self.get_state_value_to_opti(np.asarray(pump_speeds)),
 
     def update_pump_speeds(self):
-        """Only update pump group speeds"""
+        """Update pump group speeds by epynet wrapped pump objects. Enables consistency among epynet wrapper & pump_speeds[] & epanet model"""
         for i, pump_group in enumerate(self.pumpGroup):
             self.pump_speeds[i] = self.wds.pumps[pump_group[0]].speed
+        self.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = self.pump_speeds[0])
+        self.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = self.pump_speeds[1])
+        self.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = self.pump_speeds[2])
         return self.pump_speeds
 
     def get_pump_speeds(self):

@@ -15,17 +15,17 @@ import os
 import yaml
 import numpy as np
 import pandas as pd
+import logging
 from scipy.optimize import minimize as neldermead
 from deap import base
 from deap import creator
 from deap import tools
 from wdsEnv import wds
-import logging
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--idscenes_start', default=108, type=int, help="Number of the scenes to generate.")
-parser.add_argument('--idscenes_end', default=109, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--idscenes_start', default=0, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--idscenes_end', default=1440, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--nscenes', default=192, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
@@ -49,8 +49,6 @@ else:
     db_name     = test_db_name+'_db'
 n_scenes    = args.idscenes_end - args.idscenes_start
 # n_scenes    = args.nscenes
-seed        = args.seed
-n_proc      = args.nproc
 
 env = wds(
         wds_name        = hparams['env']['waterNet']+'_master',
@@ -105,67 +103,65 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.info(str.format("Start print log"))
 for scene_id in range(args.idscenes_start, args.idscenes_end):
-    env.apply_scene(scene_id)
     logger.info(str.format("scene_id {0}", scene_id))
-    print(env.wds.pumps.speed)
-    logger.info(env.wds.pumps.speed)
+    env.apply_scene(scene_id)
     # env.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = env.pump_speeds[0])
     # env.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = env.pump_speeds[1])
     # env.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = env.pump_speeds[2])
-    env.wds.solve(scene_id * 300)
-    id = env.wds.ep.ENgetlinkindex("XJ-P2")
-    print("XJ-P2 id:", id)
-    id = env.wds.ep.ENgetlinkindex("XJ-P4")
-    print("XJ-P4 id:", id)
-    id = env.wds.ep.ENgetlinkindex("XJ-P9")
-    print("XJ-P9 id:", id)
-    print(env.wds.ep.ENgetlinkvalue(index = 42691, paramcode = 5)) 
-    env.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = env.pump_speeds[0])
-    print(env.wds.ep.ENgetlinkvalue(index = 42691, paramcode = 5)) 
+    env.wds.solve(scene_id)
+    id = env.wds.ep.ENgetnodeindex("J33804")
+    print("demand: ", env.wds.ep.ENgetnodevalue(index = id, paramcode = 9))
+    # env.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = env.pump_speeds[0])
+    # print(env.wds.ep.ENgetlinkvalue(index = 42691, paramcode = 5)) 
     print("Pump speeds", env.pump_speeds)
-    logger.info(env.pump_speeds)
     print(env.wds.pumps.speed)
+    id = env.wds.ep.ENgetlinkindex("XJ-P2")
+    print("XJ-P2 Speed:", env.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+    id = env.wds.ep.ENgetlinkindex("XJ-P4")
+    print("XJ-P4 Speed:", env.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+    id = env.wds.ep.ENgetlinkindex("XJ-P9")
+    print("XJ-P9 Speed:", env.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+    print(env.wds.ep.ENgetlinkvalue(index = 42691, paramcode = 5)) 
     logger.info(env.wds.pumps.speed)
-    # # print(env.wds.solved)
-    print(env.wds.reservoirs.head + 1)
-    logger.info(env.wds.reservoirs.head + 1)
+    print(env.wds.reservoirs.head)
+    logger.info(env.wds.reservoirs.head)
     # print("2 bef head: ", env.get_point_head("1100325-A"))
     # print("2 aft head: ", env.get_point_head("1100325-B"))
     # print("4 bef head: ", env.get_point_head("1100323-A"))
     # print("4 aft head: ", env.get_point_head("1100323-B"))
     # print("9 bef head: ", env.get_point_head("1100778-A"))
     # print("9 aft head: ", env.get_point_head("1100778-B"))
-    print("XFX head: ", env.get_point_head("XFX-OP"))
-    logger.info(str.format("XFX head: {0}", env.get_point_head("XFX-OP")))
-    logger.info(str.format("XFX-P3 leverage: {0}", env.get_point_head("XFX-OP") - env.get_point_head("XFX-node9")))
-    logger.info(str.format("XFX-P5 leverage: {0}", env.get_point_head("XFX-OP") + 5.65 - env.wds.reservoirs["R00008"].head - 1))
-    print("HX head: ", env.get_point_head("HX-node12"))   
-    logger.info(str.format("HX head: {0}", env.get_point_head("HX-node12")))
-    logger.info(str.format("HX-P3 leverage: {0}", env.get_point_head("HX-node14") - env.get_point_head("HX-node8")))
-    logger.info(str.format("HX-P5 leverage: {0}", env.get_point_head("HX-node12") + 3.75 - env.wds.reservoirs["R00009"].head - 1))
-    print(str.format("XJ head: {0}", env.get_point_head("XJ-node43")))   
-    logger.info(str.format("XJ head: {0}", env.get_point_head("XJ-node43")))
-    logger.info(str.format("R1-P leverage: {0}", env.get_point_head("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R1"].head - 1))
-    logger.info(str.format("R2-P leverage: {0}", env.get_point_head("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R2"].head - 1))
+    print("XFX head: ", env.get_point_pressure("XFX-OP"))
+    logger.info(str.format("XFX-OP head: {0}", env.get_point_pressure("XFX-OP")))
+    logger.info(str.format("XFX-P3 leverage: {0}", env.get_point_pressure("XFX-OP") - env.get_point_pressure("XFX-node9")))
+    logger.info(str.format("XFX-P5 leverage: {0}", env.get_point_pressure("XFX-OP") + 5.65 - env.wds.reservoirs["R00008"].head))
+    print("HX head: ", env.get_point_pressure("HX-node12"))   
+    logger.info(str.format("HX-node12 head: {0}", env.get_point_pressure("HX-node12")))
+    logger.info(str.format("HX-P3 leverage: {0}", env.get_point_pressure("HX-node14") - env.get_point_pressure("HX-node8")))
+    logger.info(str.format("HX-P5 leverage: {0}", env.get_point_pressure("HX-node12") + 3.75 - env.wds.reservoirs["R00009"].head))
+    print(str.format("XJ head: {0}", env.get_point_pressure("XJ-node43")))   
+    logger.info(str.format("XJ-node43 head: {0}", env.get_point_pressure("XJ-node43")))
+    logger.info(str.format("R1-P leverage: {0}", env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R1"].head))
+    logger.info(str.format("R2-P leverage: {0}", env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R2"].head))
     # print("head of neg dmd point: ", env.get_point_head("J-HCXZ01Z_P"))
     # print("highest demand: ", max(env.wds.junctions.basedemand))
     # print("lowest demand: ", min(env.wds.junctions.basedemand))
     line = []
-    line.append(sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
+    line.append(env.totDmd)
     print("tot demand: ", line[-1])
     logger.info(str.format("tot demand: {0}", line[-1]))
     # print("net demand: ", sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
     # print("net inflow: ", abs(sum(map(lambda x : x if x < 0 else 0, env.wds.junctions.basedemand))))
     # line.append(env.get_point_head("XFX-OP"))
-    line.append(env.get_point_head(env.controlPoint))
+    line.append(env.get_point_pressure(env.controlPoint) if env.get_point_pressure(env.controlPoint) > -50 else -50)
     rewards.append(env.get_state_value())
     logger.info(str.format("Reward is {0}", rewards[-1]))
     if (line[-1] < 16): 
-        print("\033[40m", line[-1], "\033[0m")
+        print("\033[31m", str.format("Ctr head: {0}", line[-1]), "\033[0m")
         logger.error(str.format("Ctr head: {0}", line[-1]))
         dissatcount += 1
     else: 
-        print("\033[40m", line[-1], "\033[0m")
+        print("\033[40m", str.format("Ctr head: {0}", line[-1]), "\033[0m")
         logger.info(str.format("Ctr head: {0}", line[-1]))
     points.append(line)
     count += 1
@@ -176,5 +172,5 @@ logger.info(str.format("Generation done, total scneces: {0}; dissatsfied count: 
 print(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
 logger.info(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
 logger.info("Finish")
-# plot2Dline(points)
-# plot1Dline(list(np.array(points)[:, 1]))
+plot2Dline(points)
+plot1Dline(list(np.array(points)[:, 1]))
