@@ -89,6 +89,13 @@ def plot2Dline(points : list):
     plt.savefig("demand-head.png")
     plt.show()
     
+def savePoints(points : list, outputpath : str):
+    with open(outputpath + ".txt", "w") as file:
+        for item in points:
+                line = str(item).strip('[').strip(']').replace(',', ' ')+ "\r\n"
+                file.write(line)
+    file.close()
+    
 points = []
 count = 0
 dissatcount = 0
@@ -96,7 +103,7 @@ rewards = []
 
 logger = logging.getLogger("logwds")
 logger.setLevel(level = logging.INFO)
-handler = logging.FileHandler("log.txt")
+handler = logging.FileHandler("results/loghistory.txt")
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(message)s')
 handler.setFormatter(formatter)
@@ -172,5 +179,7 @@ logger.info(str.format("Generation done, total scneces: {0}; dissatsfied count: 
 print(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
 logger.info(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
 logger.info("Finish")
+savePoints(points, "results/ctrhead-demand")
+savePoints(rewards, "results/rewards")
 plot2Dline(points)
 plot1Dline(list(np.array(points)[:, 1]))

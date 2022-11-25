@@ -375,7 +375,9 @@ class wds():
         return np.concatenate([heads, speeds])
 
     def restore_original_demands(self, i):
-        self.apply_demandSnapshot(i)
+        mp = self.parser.demandSnapshot(i)
+        for junc in self.wds.junctions:
+            junc.basedemand = mp[junc.uid] if (junc.uid in mp.keys()) else junc.basedemand
 
     def build_truncnorm_randomizer(self, lo, hi, mu, sigma):
         randomizer = stats.truncnorm(

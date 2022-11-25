@@ -16,7 +16,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=5, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=1, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -65,7 +65,7 @@ env = wds(
 )
 
 def generate_scenes(n_scenes):
-    """Generate validation scenes"""
+    # """Generate validation scenes"""
     junction_ids    = list(env.wds.junctions.uid)
     demand_db = pd.DataFrame(
         np.empty(shape = (n_scenes, len(junction_ids))),
@@ -164,7 +164,7 @@ class differential_evolution():
         toolbox.register("evaluate",
             reward_to_deap)
     
-        env.wds.junctions.basedemand    = scene_df.loc[scene_id]
+        env.apply_scene(scene_id)
         pop = toolbox.population(n=MU);
         hof = tools.HallOfFame(1)
     
@@ -341,7 +341,7 @@ class fixed_step_size_random_search():
             random.seed()
             np.random.seed()
 
-        env.wds.junctions.basedemand    = scene_df.loc[scene_id]
+        env.apply_scene(scene_id)
         candidate   = np.random.uniform(
                         low     = self.limitLo,
                         high    = self.limitHi,
@@ -398,13 +398,12 @@ oneshot = fixed_step_size_random_search(
 
 def main():
     subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    # subdf_de    = optimize_scenes(scene_df, de.maximize)
-    # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
-    # subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
+    subdf_de    = optimize_scenes(scene_df, de.maximize)
+    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
 
-    subdfs      = {'nm': subdf_nm}
-    # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
+    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
 
