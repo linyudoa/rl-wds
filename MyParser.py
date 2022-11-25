@@ -151,7 +151,7 @@ class MyParser():
                 print("Pattern illegal, should be in filed [PATTERNS]")
                 return 
             patternFactorPos = i % 288 if len(self.patterns[patternId]) == 288 else i 
-            mp[pump] =float(self.patterns[patternId][patternFactorPos])
+            mp[pump] = float(self.patterns[patternId][patternFactorPos])
         # print("total pump speed of timestamp ", i +  1, "is: ", reduce(lambda x, y : x + y, mp.values()))
         return mp
 
