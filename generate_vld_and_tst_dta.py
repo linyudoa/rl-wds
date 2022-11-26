@@ -5,6 +5,7 @@ import yaml
 import multiprocessing
 import array
 import operator
+import logging
 import random
 import numpy as np
 import pandas as pd
@@ -64,6 +65,18 @@ env = wds(
         seed            = args.seed
 )
 
+# logging infomation
+points = []
+rewards = []
+
+logger = logging.getLogger("lognm")
+logger.setLevel(level = logging.INFO)
+handler = logging.FileHandler("results/logopti.txt")
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 def generate_scenes(n_scenes):
     # """Generate validation scenes"""
     junction_ids    = list(env.wds.junctions.uid)
@@ -117,6 +130,7 @@ class nelder_mead_method():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
         print(result_df)
+        logger.info(str.format("scene_id {0}", result_df))
         return result_df
 
 class differential_evolution():
@@ -398,14 +412,16 @@ oneshot = fixed_step_size_random_search(
 
 def main():
     subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    subdf_de    = optimize_scenes(scene_df, de.maximize)
-    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
-    subdf_rnd   = optimize_scenes(scene_df, oneshot.maximize)
+    # subdf_de    = optimize_scenes(scene_df, de.maximize)
+    # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
 
-    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs, 'oneshot': subdf_rnd}
+    subdfs      = {'nm': subdf_nm}
+    # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
+    logger.info(str.format("Finish"))
+
 
 if __name__ == "__main__":
     main()
