@@ -17,7 +17,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=2, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -84,13 +84,13 @@ def generate_scenes(n_scenes):
         np.empty(shape = (n_scenes, len(junction_ids))),
         columns = junction_ids)
     for i in range(n_scenes):
-        env.restore_original_demands(i)
+        # env.restore_original_demands(i)
         demand_db.loc[i]    = env.wds.junctions.basedemand
     return demand_db
 
-def reward_to_scipy(pump_speeds):
+def reward_to_scipy(pump_speeds, scene_id):
     """Only minimization allowed."""
-    return -env.get_state_value_to_opti(pump_speeds)
+    return -env.get_state_value_to_opti(pump_speeds, scene_id)
 
 def reward_to_deap(pump_speeds):
     return env.get_state_value_to_opti(np.asarray(pump_speeds)),
@@ -107,17 +107,19 @@ class nelder_mead_method():
         else:
             random.seed()
             
-        init_guess  = []
-        for i in range(env.dimensions):
-            init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
-
         env.apply_scene(scene_id)
+        init_guess  = env.get_pump_speeds()
+        print("init_guess ", init_guess)
+        # for i in range(env.dimensions):
+        #     init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
+
         options     = { 'maxfev': 1000,
                         'xatol' : .005,
                         'fatol' : .01}
         result  = neldermead(
             reward_to_scipy,
             init_guess,
+            args = scene_id,
             method  = 'Nelder-Mead',
             options = options)
     
@@ -129,6 +131,7 @@ class nelder_mead_method():
         result_df['evals']     = result.nit
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
+        env.printState()
         print(result_df)
         logger.info(str.format("scene_id {0}", result_df))
         return result_df
@@ -313,6 +316,8 @@ class particle_swarm_optimization():
         result_df['evals']     = NGEN*MU
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = best[i]
+        env.printState()
+        print(result_df)
         del creator.FitnessMax, creator.Particle
         return result_df
 
@@ -412,12 +417,12 @@ oneshot = fixed_step_size_random_search(
 
 def main():
     subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    # subdf_de    = optimize_scenes(scene_df, de.maximize)
-    # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    # # subdf_de    = optimize_scenes(scene_df, de.maximize)
+    # # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    # # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
 
     subdfs      = {'nm': subdf_nm}
-    # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
+    # # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
     logger.info(str.format("Finish"))

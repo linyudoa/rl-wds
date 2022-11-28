@@ -103,10 +103,10 @@ class wds():
         # Reward control
         self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
-        self.headLimitLo    = 16
+        self.headLimitLo    = 16.5
         self.headLimitHi    = 60
         self.maxHead        = np.max(peak_heads)
-        self.rewScale       = [8,5,3] # mut factors of valid head, head ratio, pump eff
+        self.rewScale       = [4, 4, 2] # mut factors of valid head, head ratio, pump eff
         # 4,4,2   3.5,3.5,3     3,3,4     2.5,2.5,5
         self.baseReward     = +1
         self.bumpPenalty    = -1
@@ -127,8 +127,8 @@ class wds():
         self.totalDemandLo  = total_demand_lo
         self.totalDemandHi  = total_demand_hi
         self.speedIncrement = speed_increment # increment of pump speed, can adjust
-        self.speedLimitLo   = .7
-        self.speedLimitHi   = 1.05
+        self.speedLimitLo   = .75
+        self.speedLimitHi   = 1.0
         self.validSpeeds   = np.arange(
                                 self.speedLimitLo,
                                 self.speedLimitHi+.001,
@@ -143,7 +143,6 @@ class wds():
         self.previous_distance  = np.nan
         self.pump_heads = [] # pump leverage to calculate
         # initialization of {observation, steps, done}
-        observation = self.reset(training=False)
         self.action_space   = gym.spaces.Discrete(2*self.dimensions+1)
         self.observation_space  = gym.spaces.Box(
                                     low     = -1,
@@ -429,19 +428,6 @@ class wds():
         self.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = self.pump_speeds[0])
         self.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = self.pump_speeds[1])
         self.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = self.pump_speeds[2])
-    
-    def apply_tankSnapShot(self, i):
-        """Apply tank levels from simulated data with timestamp i"""
-        levelList = self.parser.tankLevelSnapshot(i)
-        self.wds.reservoirs[self.tankKeys[0]].elevation = levelList[0] / 4.33999996185303
-        self.wds.reservoirs[self.tankKeys[1]].elevation = levelList[1] / 3.92999997138977
-        self.wds.reservoirs[self.reserviorKeys[0]].elevation = levelList[2] / 2.0151436661455358
-        self.wds.reservoirs[self.reserviorKeys[1]].elevation = levelList[3] / 4.849658299999999
-        self.wds.reservoirs[self.reserviorKeys[2]].elevation = levelList[4] / 23.7860507965088
-        self.wds.reservoirs[self.reserviorKeys[3]].elevation = levelList[5] / 24.5235137939453
-        self.wds.reservoirs[self.reserviorKeys[4]].elevation = levelList[6] / 23.7945976257324
-        self.wds.reservoirs[self.reserviorKeys[5]].elevation = levelList[7] / 24.4465160369873
-        self.wds.reservoirs[self.reserviorKeys[6]].elevation = levelList[8] / 23.524621963501
 
         # # for orig
 #     def calculate_pump_efficiencies(self):
@@ -507,24 +493,25 @@ class wds():
                 np.count_nonzero(heads > self.headLimitHi))
             valid_heads_ratio   = 1 - (invalid_heads_count / len(heads)) # calc valid head ratio
 
-            total_efficiency    = np.prod(self.pumpEffs)
+            # total_efficiency    = np.prod(self.pumpEffs)
             control_head = self.get_point_pressure(self.controlPoint)
+
+            peakEffs = [80.14655, 79.52216, 73.04018]
             
-            valid_heads_score = valid_heads_ratio
             control_head_ratio = math.exp(-(control_head - self.headLimitLo) / 25)
-            energy_eff_score = total_efficiency / self.peakTotEff
-            result  = ( self.rewScale[0] * valid_heads_score + 
+            energy_eff_ratio = np.prod(self.pumpEffs / peakEffs)
+            result  = ( self.rewScale[0] * valid_heads_ratio + 
                         self.rewScale[1] * control_head_ratio + 
-                        self.rewScale[2] * energy_eff_score) / sum(self.rewScale)
-            # print("valid_heads_score: ", self.rewScale[0] * valid_heads_score)
-            # print("tank_usage_score: ", self.rewScale[1] * control_head_ratio)
-            # print("energy_eff_score: ", self.rewScale[2] * energy_eff_score)
+                        self.rewScale[2] * energy_eff_ratio) / sum(self.rewScale)
+            print("valid_heads_score: ", valid_heads_ratio)
+            print("control_head_score: ", control_head_ratio)
+            print("energy_eff_score: ", energy_eff_ratio)
         else:
             result = 0
         return result
 
 # restrict pump speed to limits and call .get_state_value()
-    def get_state_value_to_opti(self, pump_speeds):
+    def get_state_value_to_opti(self, pump_speeds, scene_id):
         np.clip(a   = pump_speeds,
             a_min   = self.speedLimitLo,
             a_max   = self.speedLimitHi,
@@ -533,7 +520,7 @@ class wds():
             for pump in pump_group:
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
         self.update_pump_speeds()
-        self.wds.solve()
+        self.wds.solve(scene_id, pump_speeds)
         return self.get_state_value()
         
     def reward_to_scipy(self, pump_speeds):
@@ -556,3 +543,18 @@ class wds():
     def get_pump_speeds(self):
         self.update_pump_speeds()
         return self.pump_speeds
+    
+    def printState(self):
+        id = self.wds.ep.ENgetlinkindex("XJ-P2")
+        print("XJ-P2 Speed:", self.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+        id = self.wds.ep.ENgetlinkindex("XJ-P4")
+        print("XJ-P4 Speed:", self.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+        id = self.wds.ep.ENgetlinkindex("XJ-P9")
+        print("XJ-P9 Speed:", self.wds.ep.ENgetlinkvalue(index = id, paramcode = 5))
+        print("XFX head: ", self.get_point_pressure("XFX-OP"))
+        print("HX head: ", self.get_point_pressure("HX-node12"))   
+        print(str.format("XJ head: {0}", self.get_point_pressure("XJ-node43")))   
+        print(str.format("R1-P leverage: {0}", self.get_point_pressure("XJ-node43") + 3.75 - self.wds.reservoirs["XJ-R1"].head))
+        print(str.format("R2-P leverage: {0}", self.get_point_pressure("XJ-node43") + 3.75 - self.wds.reservoirs["XJ-R2"].head))
+        print("\033[40m", str.format("Reward is {0}", self.get_state_value()), "\033[0m")
+        print("\033[40m", str.format("Ctr head: {0}", self.get_point_pressure(self.controlPoint)), "\033[0m")
