@@ -67,3 +67,4 @@ advans of the model:
 todo:
 1. figure out historical score and ctr head value, if too weird, modify pump status
 2. figure out what's happening when ctr head is too low, containing pump flow & head as well as reservoir head
+3. Extend epynet to add logic to change pump speed
