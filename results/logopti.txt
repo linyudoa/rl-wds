@@ -1,8 +1,0 @@
-start opti with method: <bound method nelder_mead_method.maximize of <__main__.nelder_mead_method object at 0x0000024A15198048>>
-0.0  0.921  44.0  0.813  0.776  0.751
-start opti with method: <bound method differential_evolution.maximize of <__main__.differential_evolution object at 0x0000024A12087F60>>
-start opti with method: <bound method nelder_mead_method.maximize of <__main__.nelder_mead_method object at 0x000001E6B57F6A58>>
-0.0  0.921  44.0  0.813  0.776  0.751
-start opti with method: <bound method differential_evolution.maximize of <__main__.differential_evolution object at 0x000001E6BCD0D2E8>>
-0.0  0.9  600.0  0.75  0.75  1.0
-start opti with method: <bound method particle_swarm_optimization.maximize of <__main__.particle_swarm_optimization object at 0x000001E6B6576208>>

@@ -17,7 +17,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=1, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -318,7 +318,6 @@ class particle_swarm_optimization():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = best[i]
         env.printState()
-        print(result_df[1, :])
         del creator.FitnessMax, creator.Particle
         env.printState()
         print(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
