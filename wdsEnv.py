@@ -33,7 +33,7 @@ class wds():
     ## setting path to .inp of waternetwork
         self.pathToRoot  = os.path.dirname(os.path.realpath(__file__))
         self.wds_name = wds_name
-        self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'.inp')
+        self.pathToWDS   = os.path.join(self.pathToRoot, 'water_networks', wds_name + '.inp')
         self.pathToTankLevel   = os.path.join(self.pathToRoot, 'water_networks', wds_name+'_tank_level.txt')
         self.wds        = Network(self.pathToWDS)
         self.demandDict = self.build_demand_dict()
@@ -60,7 +60,7 @@ class wds():
         self.controlPoint = "QINGDONG"
         self.demandLimitLo = 0
         self.demandLimitHi = 5000
-        # self.apply_scene(0) # using demand at timestamp 0 as original demand
+        self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
             for i, key in enumerate(self.headMaskKeys):
@@ -424,10 +424,7 @@ class wds():
                 pump.speed = pumpSpeedMap[pump.uid] if pumpSpeedMap[pump.uid] > 0.65 else 0
                 pump.initstatus = 1 if (pump.speed > 0.001) else 0
             else: print("\033[0;31;40m", pump.uid, pumpSpeedMap[pump.uid], "\033[0m")
-        self.update_pump_speeds()
-        self.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = self.pump_speeds[0])
-        self.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = self.pump_speeds[1])
-        self.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = self.pump_speeds[2])
+        self.update_pump_speeds(i)
 
         # # for orig
 #     def calculate_pump_efficiencies(self):
@@ -498,7 +495,7 @@ class wds():
 
             peakEffs = [80.14655, 79.52216, 73.04018]
             
-            control_head_ratio = math.exp(-(control_head - self.headLimitLo) / 25)
+            control_head_ratio = math.exp(-(abs(control_head - self.headLimitLo)) / 25)
             energy_eff_ratio = np.prod(self.pumpEffs / peakEffs)
             result  = ( self.rewScale[0] * valid_heads_ratio + 
                         self.rewScale[1] * control_head_ratio + 
@@ -519,8 +516,8 @@ class wds():
         for group_id, pump_group in enumerate(self.pumpGroup):
             for pump in pump_group:
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
-        self.update_pump_speeds()
-        self.wds.solve(scene_id, pump_speeds)
+        self.update_pump_speeds(scene_id)
+        self.wds.solve(scene_id)
         return self.get_state_value()
         
     def reward_to_scipy(self, pump_speeds):
@@ -531,13 +528,14 @@ class wds():
         """Return should be tuple."""
         return self.get_state_value_to_opti(np.asarray(pump_speeds)),
 
-    def update_pump_speeds(self):
+    def update_pump_speeds(self, scene_id = -1):
         """Update pump group speeds by epynet wrapped pump objects. Enables consistency among epynet wrapper & pump_speeds[] & epanet model"""
         for i, pump_group in enumerate(self.pumpGroup):
             self.pump_speeds[i] = self.wds.pumps[pump_group[0]].speed
-        self.wds.ep.ENsetlinkvalue(index = 42691, paramcode = 5, value = self.pump_speeds[0])
-        self.wds.ep.ENsetlinkvalue(index = 42689, paramcode = 5, value = self.pump_speeds[1])
-        self.wds.ep.ENsetlinkvalue(index = 42703, paramcode = 5, value = self.pump_speeds[2])
+        if (scene_id != -1):
+            self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P2"), period = scene_id + 1, value = self.pump_speeds[0])
+            self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P4"), period = scene_id + 1, value = self.pump_speeds[1])
+            self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P9"), period = scene_id + 1, value = self.pump_speeds[2])
         return self.pump_speeds
 
     def get_pump_speeds(self):
