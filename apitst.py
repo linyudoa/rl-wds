@@ -25,7 +25,7 @@ from wdsEnv import wds
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
 parser.add_argument('--idscenes_start', default=0, type=int, help="Number of the scenes to generate.")
-parser.add_argument('--idscenes_end', default=2, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--idscenes_end', default=1440, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--nscenes', default=192, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
@@ -70,7 +70,6 @@ def plot1Dline(points : list):
     ax.set_ylabel('Y Label')
 
     plt.savefig("ctr_head.png")
-    plt.show()
 
 def plot2Dline(points : list):
     fig = plt.figure()
@@ -87,7 +86,6 @@ def plot2Dline(points : list):
     ax.set_ylabel('Y Label')
 
     plt.savefig("demand-head.png")
-    plt.show()
     
 def savePoints(points : list, outputpath : str):
     with open(outputpath + ".txt", "w") as file:

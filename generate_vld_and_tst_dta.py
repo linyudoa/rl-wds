@@ -110,8 +110,6 @@ class nelder_mead_method():
         env.apply_scene(scene_id)
         init_guess  = env.get_pump_speeds()
         print("init_guess ", init_guess)
-        # for i in range(env.dimensions):
-        #     init_guess.append(random.uniform(env.speedLimitLo, env.speedLimitHi))
 
         options     = { 'maxfev': 1000,
                         'xatol' : .005,
@@ -132,8 +130,8 @@ class nelder_mead_method():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
         env.printState()
-        print(result_df)
-        logger.info(str.format("scene_id {0}", result_df))
+        print(str(result_df.values[0]).strip('[').strip(']'))
+        logger.info(str(result_df.values[0]).strip('[').strip(']'))
         return result_df
 
 class differential_evolution():
@@ -218,6 +216,9 @@ class differential_evolution():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = hof[0][i]
         del creator.FitnessMax, creator.Individual
+        env.printState()
+        print(str(result_df.values[0]).strip('[').strip(']'))
+        logger.info(str(result_df.values[0]).strip('[').strip(']'))
         return result_df
 
 class particle_swarm_optimization():
@@ -317,8 +318,11 @@ class particle_swarm_optimization():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = best[i]
         env.printState()
-        print(result_df)
+        print(result_df[1, :])
         del creator.FitnessMax, creator.Particle
+        env.printState()
+        print(str(result_df.values[0]).strip('[').strip(']'))
+        logger.info(str(result_df.values[0]).strip('[').strip(']'))
         return result_df
 
 class fixed_step_size_random_search():
@@ -380,9 +384,13 @@ class fixed_step_size_random_search():
         result_df['evals']     = self.maxIter
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = candidate[i]
+        env.printState()
+        print(str(result_df.values[0]).strip('[').strip(']'))
+        logger.info(str(result_df.values[0]).strip('[').strip(']'))
         return result_df
 
 def optimize_scenes(scene_df, method=None):
+    logger.info(str.format("start opti with method: {0}", method))
     pool        = multiprocessing.Pool(n_proc)
     result_df   = pool.map(method, range(len(scene_df)))
     result_df   = pd.concat(result_df)
@@ -407,25 +415,17 @@ fssrs   = fixed_step_size_random_search(
     limit_hi    = env.speedLimitHi,
     step_size   = env.speedIncrement,
     maxfev      = 500)
-oneshot = fixed_step_size_random_search(
-    target      = reward_to_deap,
-    dims        = env.dimensions,
-    limit_lo    = env.speedLimitLo,
-    limit_hi    = env.speedLimitHi,
-    step_size   = env.speedIncrement,
-    maxfev      = 1)
 
 def main():
     subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    # # subdf_de    = optimize_scenes(scene_df, de.maximize)
-    # # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    # # subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    subdf_de    = optimize_scenes(scene_df, de.maximize)
+    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
+    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
 
-    subdfs      = {'nm': subdf_nm}
-    # # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
+    # subdfs      = {'nm': subdf_nm}
+    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
-    logger.info(str.format("Finish"))
 
 
 if __name__ == "__main__":

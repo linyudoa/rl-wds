@@ -5,6 +5,7 @@ import scipy.stats as stats
 from scipy.optimize import minimize
 import gym.spaces
 import random
+from scipy.interpolate import interp1d
 from MyParser import MyParser
 from functools import reduce
 from pipe import select, where
@@ -84,28 +85,26 @@ class wds():
                                     lo=.7, hi=1.3, mu=1.0, sigma=1.0)
         
         # Theoretical bounds of {head, efficiency}
-        peak_heads   = []
-        for key in nomHCurvePoliDict.keys():
-            max_q       = np.max(nomHCurvePtsDict[key][:,0])
-            opti_result = minimize(
-                -nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
-            peak_heads.append(nomHCurvePoliDict[key](opti_result.x[0]))
-        peak_effs  = []
-        for key in nomHCurvePoliDict.keys():
-            max_q       = np.max(nomHCurvePtsDict[key][:,0])
-            q_list      = np.linspace(0, max_q, 10)
-            head_poli   = nomHCurvePoliDict[key]
-            eff_poli    = self.nomECurvePoliDict[key]
-            opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
-            peak_effs.append(eff_poli(opti_result.x[0]))
-        self.peakTotEff = 85*80*80
+        # peak_heads   = []
+        # for key in nomHCurvePoliDict.keys():
+        #     max_q       = np.max(nomHCurvePtsDict[key][:,0])
+        #     opti_result = minimize(
+        #         -nomHCurvePoliDict[key], x0=1, bounds=[(0, max_q)])
+        #     peak_heads.append(nomHCurvePoliDict[key](opti_result.x[0]))
+        # peak_effs  = []
+        # for key in nomHCurvePoliDict.keys():
+        #     max_q       = np.max(nomHCurvePtsDict[key][:,0])
+        #     q_list      = np.linspace(0, max_q, 10)
+        #     head_poli   = nomHCurvePoliDict[key]
+        #     eff_poli    = self.nomECurvePoliDict[key]
+        #     opti_result = minimize(-eff_poli, x0=1, bounds=[(0, max_q)])
+        #     peak_effs.append(eff_poli(opti_result.x[0]))
 
         # Reward control
         self.dimensions     = len(self.pumpGroup)
         self.episodeLength  = episode_len
         self.headLimitLo    = 16.5
         self.headLimitHi    = 60
-        self.maxHead        = np.max(peak_heads)
         self.rewScale       = [4, 4, 2] # mut factors of valid head, head ratio, pump eff
         # 4,4,2   3.5,3.5,3     3,3,4     2.5,2.5,5
         self.baseReward     = +1
@@ -292,8 +291,9 @@ class wds():
         polinomials = dict()
         if encapsulated:
             for curve in pts_dict:
-                polinomials[curve]  = np.poly1d(np.polyfit(
-                    pts_dict[curve][:,0], pts_dict[curve][:,1], degree))
+                # polinomials[curve]  = np.poly1d(np.polyfit(
+                #     pts_dict[curve][:,0], pts_dict[curve][:,1], degree))
+                polinomials[curve] = interp1d(pts_dict[curve][:,0], pts_dict[curve][:,1], bounds_error = False, fill_value=(pts_dict[curve][:,1][0], pts_dict[curve][:,1][-1]), kind="slinear")
         else:
             for curve in pts_dict:
                 polinomials[curve]  = np.polyfit(
@@ -493,16 +493,18 @@ class wds():
             # total_efficiency    = np.prod(self.pumpEffs)
             control_head = self.get_point_pressure(self.controlPoint)
 
-            peakEffs = [80.14655, 79.52216, 73.04018]
+            peakEffs = [80.14655, 79.52216, 75.04018]
             
-            control_head_ratio = math.exp(-(abs(control_head - self.headLimitLo)) / 25)
+            control_head_ratio = math.exp(-(abs(control_head - self.headLimitLo)) / 10)
             energy_eff_ratio = np.prod(self.pumpEffs / peakEffs)
             result  = ( self.rewScale[0] * valid_heads_ratio + 
                         self.rewScale[1] * control_head_ratio + 
                         self.rewScale[2] * energy_eff_ratio) / sum(self.rewScale)
-            print("valid_heads_score: ", valid_heads_ratio)
-            print("control_head_score: ", control_head_ratio)
-            print("energy_eff_score: ", energy_eff_ratio)
+            print(self.pump_speeds)
+            print(self.pumpEffs)
+            # print("valid_heads_score: ", valid_heads_ratio)
+            # print("control_head_score: ", control_head_ratio)
+            # print("energy_eff_score: ", energy_eff_ratio)
         else:
             result = 0
         return result
