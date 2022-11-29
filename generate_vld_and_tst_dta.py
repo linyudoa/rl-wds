@@ -17,7 +17,7 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--nscenes', default=1440, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--nscenes', default=1, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
 parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
@@ -106,7 +106,7 @@ class nelder_mead_method():
             random.seed(args.seed)
         else:
             random.seed()
-            
+        
         env.apply_scene(scene_id)
         init_guess  = env.get_pump_speeds()
         print("init_guess ", init_guess)
@@ -130,8 +130,8 @@ class nelder_mead_method():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = result.x[i]
         env.printState()
-        print(str(result_df.values[0]).strip('[').strip(']'))
-        logger.info(str(result_df.values[0]).strip('[').strip(']'))
+        print(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
+        logger.info(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
         return result_df
 
 class differential_evolution():
@@ -217,8 +217,8 @@ class differential_evolution():
             result_df['speedOfGrp'+str(i)] = hof[0][i]
         del creator.FitnessMax, creator.Individual
         env.printState()
-        print(str(result_df.values[0]).strip('[').strip(']'))
-        logger.info(str(result_df.values[0]).strip('[').strip(']'))
+        print(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
+        logger.info(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
         return result_df
 
 class particle_swarm_optimization():
@@ -321,8 +321,8 @@ class particle_swarm_optimization():
         print(result_df[1, :])
         del creator.FitnessMax, creator.Particle
         env.printState()
-        print(str(result_df.values[0]).strip('[').strip(']'))
-        logger.info(str(result_df.values[0]).strip('[').strip(']'))
+        print(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
+        logger.info(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
         return result_df
 
 class fixed_step_size_random_search():
@@ -385,8 +385,8 @@ class fixed_step_size_random_search():
         for i in range(env.dimensions):
             result_df['speedOfGrp'+str(i)] = candidate[i]
         env.printState()
-        print(str(result_df.values[0]).strip('[').strip(']'))
-        logger.info(str(result_df.values[0]).strip('[').strip(']'))
+        print(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
+        logger.info(str(list(map(lambda x : round(x, 3), list(result_df.values[0])))).strip('[').strip(']').replace(',', ' '))
         return result_df
 
 def optimize_scenes(scene_df, method=None):

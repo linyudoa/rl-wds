@@ -61,6 +61,7 @@ class wds():
         self.controlPoint = "QINGDONG"
         self.demandLimitLo = 0
         self.demandLimitHi = 5000
+        self.scene_id = -1
         self.apply_scene(0) # using demand at timestamp 0 as original demand
 
         if (len(self.headMaskKeys) != 0):
@@ -402,6 +403,7 @@ class wds():
             junction.basedemand *= target_sum_of_demands / sum_of_random_demands
 
     def apply_scene(self, i):
+        self.scene_id = i
         self.calc_totdemand(i)
         self.apply_pumpStatusSnapshot(i)
 
@@ -500,8 +502,8 @@ class wds():
             result  = ( self.rewScale[0] * valid_heads_ratio + 
                         self.rewScale[1] * control_head_ratio + 
                         self.rewScale[2] * energy_eff_ratio) / sum(self.rewScale)
-            print(self.pump_speeds)
-            print(self.pumpEffs)
+            # print(self.pump_speeds)
+            # print(self.pumpEffs)
             # print("valid_heads_score: ", valid_heads_ratio)
             # print("control_head_score: ", control_head_ratio)
             # print("energy_eff_score: ", energy_eff_ratio)
@@ -510,7 +512,7 @@ class wds():
         return result
 
 # restrict pump speed to limits and call .get_state_value()
-    def get_state_value_to_opti(self, pump_speeds, scene_id):
+    def get_state_value_to_opti(self, pump_speeds, scene_id = -1):
         np.clip(a   = pump_speeds,
             a_min   = self.speedLimitLo,
             a_max   = self.speedLimitHi,
@@ -518,6 +520,8 @@ class wds():
         for group_id, pump_group in enumerate(self.pumpGroup):
             for pump in pump_group:
                 self.wds.pumps[pump].speed  = pump_speeds[group_id]
+        if (scene_id < 0 and self.scene_id > 0):
+            scene_id = self.scene_id
         self.update_pump_speeds(scene_id)
         self.wds.solve(scene_id)
         return self.get_state_value()
