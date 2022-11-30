@@ -416,14 +416,12 @@ fssrs   = fixed_step_size_random_search(
     maxfev      = 500)
 
 def main():
-    # subdf_nm    = optimize_scenes(scene_df, nm.maximize)
-    # subdf_de    = optimize_scenes(scene_df, de.maximize)
-    # subdf_pso   = optimize_scenes(scene_df, pso.maximize)
-    subdf_fssrs = optimize_scenes(scene_df, fssrs.maximize)
+    subdf_nm    = optimize_scenes(scene_df, nm.maximize)
+    subdf_de    = optimize_scenes(scene_df, de.maximize)
+    subdf_pso   = optimize_scenes(scene_df, pso.maximize)
 
     # subdfs      = {'nm': subdf_nm}
-    # subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso, 'fssrs': subdf_fssrs}
-    subdfs      = {'fssrs': subdf_fssrs}
+    subdfs      = {'nm': subdf_nm, 'de': subdf_de, 'pso': subdf_pso}
     result_df   = pd.concat(subdfs.values(), axis=1, keys=subdfs.keys())
     result_df.to_hdf(pathToDB, key='results', mode='a')
 

@@ -1609,3 +1609,5 @@ start opti with method: <bound method particle_swarm_optimization.maximize of <_
 56.0  0.874  600.0  0.8  0.75  0.75
 57.0  0.876  600.0  0.799  0.759  0.75
 start opti with method: <bound method fixed_step_size_random_search.maximize of <__main__.fixed_step_size_random_search object at 0x0000021E9D9CB320>>
+0.0  0.899  500.0  0.764  0.754  0.996
+1.0  0.889  500.0  0.833  0.786  0.754
