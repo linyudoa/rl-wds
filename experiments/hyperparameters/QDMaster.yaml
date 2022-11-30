@@ -14,8 +14,8 @@ evaluation:
     dbName      : qingdong_rnd
 training:
     initLrnRate     : .0001
-    totalSteps      : 5000
+    totalSteps      : 40000
     gamma           : .99
-    batchSize       : 8
+    batchSize       : 16
     learningStarts  : 1000
     bufferSize      : 25000

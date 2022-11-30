@@ -15,7 +15,7 @@ from wdsEnv import wds
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', help="Name of the YAML file.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
-parser.add_argument('--nproc', default=1, type=int, help="Number of processes to raise.")
+parser.add_argument('--nproc', default=2, type=int, help="Number of processes to raise.")
 parser.add_argument('--tstsplit', default=40, type=int, help="Ratio of scenes moved from vld to tst scene in percentage.")
 args    = parser.parse_args()
 
@@ -122,6 +122,7 @@ def play_scenes(scenes, history, path_to_history, tst=False):
     cummulated_reward   = 0
     for scene_id in range(len(scenes)):
         env.apply_scene(scene_id)
+        env.scene_id = scene_id
         obs     = env.reset(training=False) # if training = true, will let nm help dqn in the first place
         rewards = np.empty(
                     shape = (env.episodeLength,),
@@ -135,10 +136,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
             obs, reward, _, _   = env.step(act, training=False)
             pump_speeds[env.steps-1, :] = env.get_pump_speeds()
             rewards[env.steps-1]        = reward
-        print("validating ", scene_id + 1, " in ", len(scenes), " scenes, reward = ", reward)
         cummulated_reward   += reward
         if tst:
-            # print(env.get_pump_speeds())
             1
         if not tst:
             df_view = history.loc[step_id].loc[scene_id].copy(deep=False)
@@ -167,7 +166,8 @@ def play_scenes(scenes, history, path_to_history, tst=False):
 def callback(_locals, _globals):
     global step_id, vld_history, best_metric
     step_id += 1
-    print('{}. step, training.'.format(step_id))
+    if (step_id % 100 == 0):
+        print('{}. step, training.'.format(step_id))
     if step_id % vldFreq == 0:
         if args.tstsplit != 100:
             print('{}. step, validating.'.format(step_id))
@@ -209,7 +209,6 @@ model   = DQN(
     policy                  = CustomPolicy,
     env                     = env,
     verbose                 = 1,
-    #learning_rate           = lr_schedule.value(step_id),
     learning_rate           = initLrnRate,
     buffer_size             = hparams['training']['bufferSize'],
     gamma                   = hparams['training']['gamma'],
@@ -223,15 +222,6 @@ model   = DQN(
     full_tensorboard_log    = True,
     seed                    = args.seed,
     n_cpu_tf_sess           = args.nproc)
-
-# # testing if we can use PPO directly
-# model   = PPO1(MlpPolicy,
-#     env                     = env,
-#     verbose                 = 1)
-
-# model.learn(
-#     total_timesteps = hparams['training']['totalSteps'],
-#     callback        = callback)
 
 model.learn(
     total_timesteps = hparams['training']['totalSteps'],

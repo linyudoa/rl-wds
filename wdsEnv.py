@@ -174,7 +174,7 @@ class wds():
                     if first_pump_in_grp.speed < self.speedLimitHi:
                         for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  += self.speedIncrement
-                        self.update_pump_speeds()
+                        self.update_pump_speeds(self.scene_id)
                         distance    = np.linalg.norm(self.optimized_speeds-self.pump_speeds)
                         if distance < self.previous_distance:
         # ----- ----- ----- ----- -----
@@ -193,7 +193,7 @@ class wds():
                     if first_pump_in_grp.speed > self.speedLimitLo:
                         for pump in self.pumpGroup[group_id]:
                             self.wds.pumps[pump].speed  -= self.speedIncrement
-                        self.update_pump_speeds()
+                        self.update_pump_speeds(self.scene_id)
                         distance    = np.linalg.norm(self.optimized_speeds-self.pump_speeds)
                         if distance < self.previous_distance: 
         # ----- ----- ----- ----- -----
@@ -210,6 +210,7 @@ class wds():
                         reward  = self.bumpPenalty
             else:
                 self.n_siesta   += 1
+                self.wds.solve(self.scene_id)
                 value   = self.get_state_value()
                 if self.n_siesta == 3:
                     self.done   = True
@@ -227,7 +228,7 @@ class wds():
                         reward  = self.n_siesta * self.baseReward
                     else:
                         reward = self.lazinessPenalty
-            self.wds.solve()
+            self.wds.solve(self.scene_id)
         else:
             if group_id != self.dimensions:
                 self.n_siesta       = 0
@@ -248,8 +249,8 @@ class wds():
                 self.n_siesta   += 1
                 if self.n_siesta == 3:
                     self.done   = True
-            self.update_pump_speeds()
-            self.wds.solve()
+            self.update_pump_speeds(self.scene_id)
+            self.wds.solve(self.scene_id)
             reward  = self.get_state_value()
         observation = self.get_observation()
         return observation, reward, self.done, {}
@@ -257,13 +258,11 @@ class wds():
     def reset(self, training=True):
         """Reset to Original pump speeds and demand, original means historic"""
         if training:
-            if self.resetOrigDemands:
-                1
-            else:
-                i = random.randint(0, 1440) # gen a snapshot from 1440 scenes
-                self.apply_scene(i)
-            self.optimize_state()
-        self.wds.solve()
+            scene_id = random.randint(0, 864) # gen a snapshot from 1440 scenes
+            self.scene_id = scene_id
+            self.apply_scene(self.scene_id)
+            self.optimize_state(self.scene_id)
+        self.wds.solve(self.scene_id)
         observation = self.get_observation()
         self.done   = False
         self.steps  = 0
@@ -275,10 +274,10 @@ class wds():
         """Collecting seeds."""
         return [seed]
 
-    def optimize_state(self):
+    def optimize_state(self, scene_id):
         """Optimize pump states with nm"""
         speeds, target_val, _   = nm.minimize(
-            self.reward_to_scipy, self.dimensions)
+            self.reward_to_scipy, scene_id, self.dimensions)
         self.optimized_speeds   = speeds
         self.optimized_value    = -target_val
 
@@ -369,7 +368,7 @@ class wds():
         return junc_heads
 
     def get_observation(self):
-        heads   = (2*self.get_junction_heads() / self.maxHead) - 1
+        heads   = (2*self.get_junction_heads() / 30) - 1
         self.update_pump_speeds()
         speeds  = self.pump_speeds / self.speedLimitHi
         return np.concatenate([heads, speeds])
@@ -526,9 +525,9 @@ class wds():
         self.wds.solve(scene_id)
         return self.get_state_value()
         
-    def reward_to_scipy(self, pump_speeds):
+    def reward_to_scipy(self, pump_speeds, scene_id):
         """Only minimization allowed."""
-        return -self.get_state_value_to_opti(pump_speeds)
+        return -self.get_state_value_to_opti(pump_speeds, scene_id)
 
     def reward_to_deap(self, pump_speeds):
         """Return should be tuple."""

@@ -90,7 +90,7 @@ def plot2Dline(points : list):
 def savePoints(points : list, outputpath : str):
     with open(outputpath + ".txt", "w") as file:
         for item in points:
-                line = str(item).strip('[').strip(']').replace(',', ' ')+ "\r\n"
+                line = str(item).strip('[').strip(']').replace(',', ' ')+ "\r"
                 file.write(line)
     file.close()
     
