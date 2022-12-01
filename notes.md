@@ -64,7 +64,12 @@ todo from 11.21:
 advans of the model: 
 1. Can predict outcome without munipulating the real model
 
-todo:
+todo: **done**
 1. figure out historical score and ctr head value, if too weird, modify pump status
 2. figure out what's happening when ctr head is too low, containing pump flow & head as well as reservoir head
 3. Extend epynet to add logic to change pump speed
+
+todo in December:
+1. 撰写论文大纲，给同学评阅 12.1
+2. 整理前言及图神经网络部分
+3. 撰写实验部分，图表丰富一些，分为用水量预测+nm部分，水压预测+强化学习部分
