@@ -427,6 +427,14 @@ class wds():
             else: print("\033[0;31;40m", pump.uid, pumpSpeedMap[pump.uid], "\033[0m")
         self.update_pump_speeds(i)
 
+    def apply_pumpStatusSnapshot_v1(self, pump_speeds, i):
+        """Generate pump speeds from pattern with timestamp i"""
+        pumpSpeedMap = self.parser.pumpSpeedSnapshot(i)
+        self.wds.pumps["XJ-P2"].speed = float(pump_speeds[0])
+        self.wds.pumps["XJ-P4"].speed = float(pump_speeds[1])
+        self.wds.pumps["XJ-P9"].speed = float(pump_speeds[2])
+        self.update_pump_speeds(i)
+
         # # for orig
 #     def calculate_pump_efficiencies(self):
 #         """calculate efficiencies from speeds"""
@@ -494,7 +502,7 @@ class wds():
             # total_efficiency    = np.prod(self.pumpEffs)
             control_head = self.get_point_pressure(self.controlPoint)
 
-            peakEffs = [80.14655, 79.52216, 75.04018]
+            peakEffs = [80.14655, 79.52216, 76.04018]
             
             control_head_ratio = math.exp(-(abs(control_head - self.headLimitLo)) / 10)
             energy_eff_ratio = np.prod(self.pumpEffs / peakEffs)
@@ -542,6 +550,16 @@ class wds():
             self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P4"), period = scene_id + 1, value = self.pump_speeds[1])
             self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P9"), period = scene_id + 1, value = self.pump_speeds[2])
         return self.pump_speeds
+
+    # def update_pump_speeds_v1(self, pump_speeds, scene_id = -1):
+    #     """Update pump group speeds by epynet wrapped pump objects. Enables consistency among epynet wrapper & pump_speeds[] & epanet model"""
+    #     for i, pump_group in enumerate(self.pumpGroup):
+    #         self.pump_speeds[i] = self.wds.pumps[pump_group[0]].speed
+    #     if (scene_id != -1):
+    #         self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P2"), period = scene_id + 1, value = float(pump_speeds[0]))
+    #         self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P4"), period = scene_id + 1, value = float(pump_speeds[1]))
+    #         self.wds.ep.ENsetpatternvalue(index = self.wds.ep.ENgetpatternindex("XJ-P9"), period = scene_id + 1, value = float(pump_speeds[2]))
+    #     return self.pump_speeds
 
     def get_pump_speeds(self):
         self.update_pump_speeds()

@@ -16,6 +16,7 @@ import yaml
 import numpy as np
 import pandas as pd
 import logging
+import pump_efficiency_cal
 from scipy.optimize import minimize as neldermead
 from deap import base
 from deap import creator
@@ -24,8 +25,8 @@ from wdsEnv import wds
 
 parser  = argparse.ArgumentParser()
 parser.add_argument('--params', default='QDMaster', type=str, help="Name of the YAML file.")
-parser.add_argument('--idscenes_start', default=0, type=int, help="Number of the scenes to generate.")
-parser.add_argument('--idscenes_end', default=2, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--idscenes_start', default=1152, type=int, help="Number of the scenes to generate.")
+parser.add_argument('--idscenes_end', default=1440, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--nscenes', default=192, type=int, help="Number of the scenes to generate.")
 parser.add_argument('--seed', default=None, type=int, help="Random seed for the optimization methods.")
 parser.add_argument('--dbname', default=None, type=str, help="Name of the generated database.")
@@ -90,14 +91,41 @@ def plot2Dline(points : list):
 def savePoints(points : list, outputpath : str):
     with open(outputpath + ".txt", "w") as file:
         for item in points:
-                line = str(item).strip('[').strip(']').replace(',', ' ')
+                line = str(item).strip('[').strip(']') + "\r"
                 file.write(line)
     file.close()
     
-points = []
+def extractSpeed():
+    inpLines = []
+    pathToInp = "results\logspeed.txt"
+    fileHandler = open(pathToInp, "r", encoding='latin1')
+    inpLines = fileHandler.readlines()
+    mp = {}
+    index = 0
+    for line in inpLines:
+        line = line.strip()
+        lineItems = line.strip().split()
+        vals = lineItems[3:]
+        for val in vals:
+            if (index in mp.keys()):
+                mp[index].append(val)
+            else:
+                mp[index] = [val]
+        index += 1
+    return mp
+
+speedMp = extractSpeed()
+
+flows = []
 count = 0
 dissatcount = 0
 rewards = []
+powers = []
+outPressure = []
+ctrPressure = []
+freq1 = []
+freq2 = []
+freq3 = []
 
 logger = logging.getLogger("logwds")
 logger.setLevel(level = logging.INFO)
@@ -111,60 +139,42 @@ for scene_id in range(args.idscenes_start, args.idscenes_end):
     print(str.format("scene_id {0}", scene_id))
     logger.info(str.format("scene_id {0}", scene_id))
     env.apply_scene(scene_id)
+    env.apply_pumpStatusSnapshot_v1(speedMp[scene_id], scene_id)
     print(env.get_pump_speeds())
-    env.wds.solve(scene_id)
+    freq1.append(env.get_pump_speeds()[0])
+    freq2.append(env.get_pump_speeds()[1])
+    freq3.append(env.get_pump_speeds()[2])
+    # env.wds.solve(scene_id)
     logger.info(env.wds.reservoirs.head)
-    
-    # print("2 bef head: ", env.get_point_head("1100325-A"))
-    # print("2 aft head: ", env.get_point_head("1100325-B"))
-    # print("4 bef head: ", env.get_point_head("1100323-A"))
-    # print("4 aft head: ", env.get_point_head("1100323-B"))
-    # print("9 bef head: ", env.get_point_head("1100778-A"))
-    # print("9 aft head: ", env.get_point_head("1100778-B"))
-    # print("XFX head: ", env.get_point_pressure("XFX-OP"))
-    # logger.info(str.format("XFX-OP head: {0}", env.get_point_pressure("XFX-OP")))
-    # logger.info(str.format("XFX-P3 leverage: {0}", env.get_point_pressure("XFX-OP") - env.get_point_pressure("XFX-node9")))
-    # logger.info(str.format("XFX-P5 leverage: {0}", env.get_point_pressure("XFX-OP") + 5.65 - env.wds.reservoirs["R00008"].head))
-    # print("HX head: ", env.get_point_pressure("HX-node12"))   
-    # logger.info(str.format("HX-node12 head: {0}", env.get_point_pressure("HX-node12")))
-    # logger.info(str.format("HX-P3 leverage: {0}", env.get_point_pressure("HX-node14") - env.get_point_pressure("HX-node8")))
-    # logger.info(str.format("HX-P5 leverage: {0}", env.get_point_pressure("HX-node12") + 3.75 - env.wds.reservoirs["R00009"].head))
-    logger.info(str.format("P1 Flow: {0}", env.wds.pumps["XJ-P2"].flow))   
-    logger.info(str.format("P1 Flow: {0}", env.wds.pumps["XJ-P4"].flow))   
-    logger.info(str.format("P1 Flow: {0}", env.wds.pumps["XJ-P9"].flow))   
+    logger.info(str.format("{0}, {1}, {2}", env.wds.pumps["XJ-P2"].flow, env.wds.pumps["XJ-P4"].flow, env.wds.pumps["XJ-P9"].flow)) 
     logger.info(str.format("R1-P leverage: {0}", env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R1"].head))
     logger.info(str.format("R2-P leverage: {0}", env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R2"].head))
-    # print("head of neg dmd point: ", env.get_point_head("J-HCXZ01Z_P"))
-    # print("highest demand: ", max(env.wds.junctions.basedemand))
-    # print("lowest demand: ", min(env.wds.junctions.basedemand))
     line = []
     line.append(env.totDmd)
-    print("tot demand: ", line[-1])
-    logger.info(str.format("tot demand: {0}", line[-1]))
-    # print("net demand: ", sum(map(lambda x : x if x > 0 else 0, env.wds.junctions.basedemand)))
-    # print("net inflow: ", abs(sum(map(lambda x : x if x < 0 else 0, env.wds.junctions.basedemand))))
-    # line.append(env.get_point_head("XFX-OP"))
-    line.append(env.get_point_pressure(env.controlPoint) if env.get_point_pressure(env.controlPoint) > -50 else -50)
     rewards.append(env.get_state_value())
-    print("\033[40m", str.format("Reward is {0}", rewards[-1]), "\033[0m")
-    logger.info(str.format("Reward is {0}", rewards[-1]))
-    if (line[-1] < 16): 
-        print("\033[31m", str.format("Ctr head: {0}", line[-1]), "\033[0m")
-        logger.error(str.format("Ctr head: {0}", line[-1]))
-        dissatcount += 1
-    else: 
-        print("\033[40m", str.format("Ctr head: {0}", line[-1]), "\033[0m")
-        logger.info(str.format("Ctr head: {0}", line[-1]))
-    points.append(line)
+    ctrPressure.append(env.get_point_pressure(env.controlPoint))
+    logger.info(str.format("tot demand: {0}", line[-1]))
+    line.append(env.get_point_pressure(env.controlPoint) if env.get_point_pressure(env.controlPoint) > -50 else -50)
+    powers.append(pump_efficiency_cal.pump_efficiency_cal("xj2", env.wds.pumps["XJ-P2"].flow, 
+        env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R1"].head)[2] + 
+        pump_efficiency_cal.pump_efficiency_cal("xj4", env.wds.pumps["XJ-P4"].flow, 
+        env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R1"].head)[2]+
+        pump_efficiency_cal.pump_efficiency_cal("xj9", env.wds.pumps["XJ-P9"].flow, 
+        env.get_point_pressure("XJ-node43") + 3.75 - env.wds.reservoirs["XJ-R2"].head)[2])
+    outPressure.append(env.get_point_pressure("XJ-node43") + 3.75)
+    flows.append(env.wds.pumps["XJ-P2"].flow+env.wds.pumps["XJ-P4"].flow+env.wds.pumps["XJ-P9"].flow)
     count += 1
-    print(str.format("----------{0} DONE----------", count / n_scenes))
-print(str.format("Generation done, total scneces: {0}; dissatsfied count: {1}", n_scenes, dissatcount))
-logger.info(str.format("Generation done, total scneces: {0}; dissatsfied count: {1}", n_scenes, dissatcount))
-print(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
-logger.info(str.format("avg score: {0} max score: {1} min score: {2}", sum(rewards) / n_scenes, max(rewards), min(rewards)))
-logger.info("Finish")
-savePoints(points, "results/ctrhead-demand")
-savePoints(rewards, "results/rewards")
-plot2Dline(points)
-plot1Dline(list(np.array(points)[:, 1]))
+# savePoints(powers, "histlog/powers")
+# savePoints(flows, "histlog/flows")
+# savePoints(rewards, "histlog/rewards")
+# savePoints(outPressure, "histlog/outPressure")
+# savePoints(ctrPressure, "histlog/ctrPressure")
+# savePoints(powers, "optilog/powers")
+# savePoints(flows, "optilog/flows")
+# savePoints(rewards, "optilog/rewards")
+savePoints(freq1, "optilog/freq1")
+savePoints(freq2, "optilog/freq2")
+savePoints(freq3, "optilog/freq3")
+# savePoints(outPressure, "optilog/outPressure")
+# savePoints(ctrPressure, "optilog/ctrPressure")
 

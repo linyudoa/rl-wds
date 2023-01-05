@@ -10,14 +10,13 @@ class MyParser():
         self.inpLines = []
         self.tankLines = []
         self.tankLevels = {}
-        self.loadFiles()
         self.patterns = {}
         self.junctions = {}
         self.demands = {}
         self.pumps = {}
-        self.loadFiles()
+        self.initialize()
 
-    def loadFiles(self):
+    def initialize(self):
         fileHandler = open(self.pathToInp, "r", encoding='latin1')
         self.inpLines = fileHandler.readlines()
         fileHandler.close()
