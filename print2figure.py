@@ -4,17 +4,17 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.dates import HourLocator, MinuteLocator, DateFormatter, drange
 
-filename1 = 'labels5-5.csv'
-filename2 = 'pred5-5.csv'
-filename3 = 'pred2-5.csv'
+filename1 = 'label.csv'
+filename2 = 'pred.csv'
+filename3 = 'pred.csv'
 df1 = pd.read_csv(filename1)
 df2 = pd.read_csv(filename2)
 df3 = pd.read_csv(filename3)
 
 def printFiguresOfFre(df1, df2, df3, length):
-    df1 = df1.iloc[:, 1:2]
-    df2 = df2.iloc[:, 1:2]
-    df3 = df3.iloc[:, 1:2]
+    df1 = df1.iloc[:, 0:1]
+    df2 = df2.iloc[:, 0:1]
+    df3 = df3.iloc[:, 0:1]
     # df4 = df4.iloc[:, 1:2]
     # df5 = df5.iloc[:, 1:2]
 
@@ -41,13 +41,14 @@ def printFiguresOfFre(df1, df2, df3, length):
     # df = np.hstack((xxaxis, yxaxis, yyaxis, yzaxis))
     # df = pd.DataFrame(df)
     # df.to_csv('csvs/results--'+str(i+1)+'.csv')
-    plt.plot(xxaxis,yxaxis,color='black', linewidth = 0.7, marker='')
-    plt.plot(xxaxis,yyaxis,color='grey', linewidth = 0.7, marker='')
+    plt.plot(xxaxis,yxaxis,color='red', linewidth = 0.7, marker='')
+    plt.plot(xxaxis,yyaxis,color='green', linewidth = 0.7, marker='')
     # plt.plot(xxaxis,yaaxis,color='yellow', linewidth = 0.5, marker='')
     # plt.plot(xxaxis,ybaxis,color='grey', linewidth = 0.5, marker='')
-    plt.legend(['Real Value', 'Graph WaveNet'])
+    plt.legend(['History Value', 'Optimized Value'])
     plt.xlabel('Time')
-    plt.ylabel('Value(KPa)')
+    plt.ylabel('Value(m)')
+    # plt.grid()
     plt.savefig('figures/preds vs. real'+ filename2 +'.png')
     plt.show()
     plt.close()
